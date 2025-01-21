@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package com.oe.machinecovers;
 
 import com.gregtechceu.gtceu.api.addon.GTAddon;
 import com.gregtechceu.gtceu.api.addon.IGTAddon;
@@ -7,12 +7,11 @@ import net.minecraft.data.recipes.FinishedRecipe;
 
 import java.util.function.Consumer;
 
-@SuppressWarnings("unused")
 @GTAddon
-public class ExampleGTAddon implements IGTAddon {
+public class MachineCoversGTAddon implements IGTAddon {
     @Override
     public GTRegistrate getRegistrate() {
-        return ExampleMod.EXAMPLE_REGISTRATE;
+        return MachineCoversMod.REGISTRATE;
     }
 
     @Override
@@ -22,7 +21,7 @@ public class ExampleGTAddon implements IGTAddon {
 
     @Override
     public String addonModId() {
-        return ExampleMod.MOD_ID;
+        return MachineCoversMod.MOD_ID;
     }
 
     @Override

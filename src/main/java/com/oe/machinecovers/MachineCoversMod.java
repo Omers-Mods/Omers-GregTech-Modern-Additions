@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package com.oe.machinecovers;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.data.chemical.material.event.MaterialEvent;
@@ -19,13 +19,15 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(ExampleMod.MOD_ID)
-public class ExampleMod {
-    public static final String MOD_ID = "examplemod";
-    public static final Logger LOGGER = LogManager.getLogger();
-    public static GTRegistrate EXAMPLE_REGISTRATE = GTRegistrate.create(ExampleMod.MOD_ID);
+import static com.oe.machinecovers.MachineCoversMod.MOD_ID;
 
-    public ExampleMod() {
+@Mod(MOD_ID)
+public class MachineCoversMod {
+    public static final String MOD_ID = "gt_machine_covers";
+    public static final Logger LOGGER = LogManager.getLogger();
+    public static GTRegistrate REGISTRATE = GTRegistrate.create(MOD_ID);
+
+    public MachineCoversMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         modEventBus.addListener(this::commonSetup);
@@ -56,7 +58,7 @@ public class ExampleMod {
     // You MUST have this for custom materials.
     // Remember to register them not to GT's namespace, but your own.
     private void addMaterialRegistries(MaterialRegistryEvent event) {
-        GTCEuAPI.materialManager.createRegistry(ExampleMod.MOD_ID);
+        GTCEuAPI.materialManager.createRegistry(MOD_ID);
     }
 
     // As well as this.

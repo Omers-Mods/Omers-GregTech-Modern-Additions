@@ -1,6 +1,6 @@
 plugins {
-    id "idea"
-    id "maven-publish"
+    id 'idea'
+    id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
 }
@@ -24,49 +24,49 @@ repositories {
         }
     }
     maven {
-        name 'FirstDarkDev'
-        url "https://maven.firstdarkdev.xyz/snapshots/"
+        name = 'FirstDarkDev'
+        url = 'https://maven.firstdarkdev.xyz/snapshots/'
     }
     maven {
         // saps.dev Maven (KubeJS and Rhino)
-        url = "https://maven.saps.dev/minecraft"
+        url = 'https://maven.saps.dev/minecraft'
         content {
-            includeGroup "dev.latvian.mods"
+            includeGroup 'dev.latvian.mods'
         }
     }
     maven { // Registrate
-        url = "https://maven.tterrag.com/"
+        url = 'https://maven.tterrag.com/'
         content {
             // need to be specific here due to version overlaps
-            includeGroup("com.tterrag.registrate")
+            includeGroup 'com.tterrag.registrate'
         }
     }
     maven {
         // Patchouli, JEI
-        name = "BlameJared"
-        url = "https://maven.blamejared.com/"
+        name = 'BlameJared'
+        url = 'https://maven.blamejared.com/'
     }
     maven {
-        url = "https://maven.theillusivec4.top/"
+        url = 'https://maven.theillusivec4.top/'
     }
     maven {
         // Curse Forge File
-        url "https://cursemaven.com/"
+        url = 'https://cursemaven.com/'
         content {
-            includeGroup "curse.maven"
+            includeGroup 'curse.maven'
         }
     }
     maven {
         // EMI
-		name = "TerraformersMC"
-		url = "https://maven.terraformersmc.com/"
+		name = 'TerraformersMC'
+		url = 'https://maven.terraformersmc.com/'
 	}
 
     maven {
-        url = "https://maven.architectury.dev"
+        url = 'https://maven.architectury.dev'
     }
     maven {
-        url = "https://thedarkcolour.github.io/KotlinForForge/"
+        url = 'https://thedarkcolour.github.io/KotlinForForge/'
     }
 
 }
@@ -102,7 +102,7 @@ minecraft {
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    minecraft("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
 
     // JEI, EMI, Jade
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
