@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    alias libs.plugins.spotless
 }
 
 def generatedResources = file("src/generated")
@@ -14,6 +15,7 @@ sourceSets {
 }
 
 repositories {
+    gradlePluginPortal()
     mavenLocal()
     mavenCentral()
     maven {
@@ -71,6 +73,8 @@ repositories {
 
 }
 
+apply from: "$rootDir/gradle/scripts/spotless.gradle"
+
 version = mod_version
 group = maven_group
 base { archivesName = archives_base_name }
@@ -123,6 +127,8 @@ dependencies {
     // lombok
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    // spotless
+    implementation("com.diffplug.spotless:com.diffplug.spotless.gradle.plugin:6.25.0")
 }
 
 tasks.named('processResources', ProcessResources).configure {
