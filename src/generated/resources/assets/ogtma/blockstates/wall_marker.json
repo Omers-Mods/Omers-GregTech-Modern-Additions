@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "ogtma:block/wall_marker"
+    },
+    "facing=north": {
+      "model": "ogtma:block/wall_marker",
+      "y": 270
+    },
+    "facing=south": {
+      "model": "ogtma:block/wall_marker",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "ogtma:block/wall_marker",
+      "y": 180
+    }
+  }
+}
