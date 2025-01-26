@@ -9,8 +9,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
-import com.oe.ogtma.common.data.CreativeModeTabs;
-import com.oe.ogtma.common.data.Machines;
+import com.oe.ogtma.common.data.*;
+import com.oe.ogtma.common.network.OANetwork;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,7 +33,7 @@ public class OGTMA {
     }
 
     private void init() {
-        REGISTRATE.creativeModeTab(CreativeModeTabs.GENERAL);
+        REGISTRATE.creativeModeTab(OACreativeModeTabs.GENERAL);
     }
 
     public static ResourceLocation id(String path) {
@@ -41,12 +41,18 @@ public class OGTMA {
     }
 
     private void constructMod(final FMLConstructModEvent event) {
-        CreativeModeTabs.init();
+        event.enqueueWork(() -> {
+            OACreativeModeTabs.init();
+            OABlocks.init();
+            OAItems.init();
+            OABlockEntities.init();
+            OANetwork.init();
 
-        REGISTRATE.registerRegistrate();
+            REGISTRATE.registerRegistrate();
+        });
     }
 
     private void registerMachines(final GTCEuAPI.RegisterEvent<ResourceLocation, MachineDefinition> event) {
-        Machines.init();
+        OAMachines.init();
     }
 }

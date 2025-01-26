@@ -24,15 +24,12 @@ import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.annotation.RequireRerender;
+import com.lowdragmc.lowdraglib.syncdata.annotation.*;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
@@ -78,43 +75,50 @@ public class EntangledQuantumTankMachine extends MetaMachine implements IAutoOut
     @Persisted
     protected boolean allowInputFromOutputSideFluids;
     @Persisted
+    @DropSaved
     protected boolean isVoiding;
     @Persisted
     @DescSynced
+    @DropSaved
     @RequireRerender
     protected int channel;
     @Nullable
     protected TickableSubscription autoOutputOwnSubs;
     @Nullable
     protected TickableSubscription autoOutputHandlerSubs;
+    @Getter
+    @Persisted
     @DescSynced
     @RequireRerender
     protected FluidChannelHandler handler;
+    @DescSynced
+    @RequireRerender
+    protected long storedAmount;
     protected final FluidChannelWrapper wrapper;
 
     public EntangledQuantumTankMachine(IMachineBlockEntity holder, Object... args) {
         super(holder);
         this.outputFacingFluids = getFrontFacing().getOpposite();
-        this.channel = 0;
         this.wrapper = new FluidChannelWrapper(this);
-        setHandler(getHandler());
     }
 
-    protected FluidChannelHandler getHandler() {
+    protected FluidChannelHandler getOrCreateHandler() {
         if (isRemote()) {
             return new FluidChannelHandler();
         }
         return FluidChannelCache.getInstance().getOrCreateHandler(getHolder().getOwner(), channel);
     }
 
-    protected void setHandler(FluidChannelHandler handler) {
-        this.handler = handler;
-        updateAutoOutputSubscription();
+    public void setChannel(int channel) {
+        this.channel = channel;
+        setHandler(getOrCreateHandler());
+        if (!isRemote()) {
+            updateAutoOutputSubscription();
+        }
     }
 
-    protected void setChannel(int channel) {
-        this.channel = channel;
-        setHandler(getHandler());
+    protected void setHandler(FluidChannelHandler handler) {
+        this.handler = handler;
     }
 
     // initializing
@@ -122,15 +126,9 @@ public class EntangledQuantumTankMachine extends MetaMachine implements IAutoOut
     @Override
     public void onLoad() {
         super.onLoad();
-        setHandler(getHandler());
+        setHandler(getOrCreateHandler());
         if (getLevel() instanceof ServerLevel serverLevel) {
             serverLevel.getServer().tell(new TickTask(0, this::updateAutoOutputSubscription));
-        }
-    }
-    
-    public void onFluidChanged() {
-        if (!isRemote()) {
-            updateAutoOutputSubscription();
         }
     }
 
@@ -230,7 +228,10 @@ public class EntangledQuantumTankMachine extends MetaMachine implements IAutoOut
         if ((isAutoOutputFluids() && !handler.isEmpty()) && outputFacing != null &&
                 GTTransferUtils.hasAdjacentFluidHandler(getLevel(), getPos(), outputFacing)) {
             autoOutputOwnSubs = subscribeServerTick(autoOutputOwnSubs, this::checkAutoOutput);
-            autoOutputHandlerSubs = handler.subscribe(autoOutputHandlerSubs, this::checkAutoOutput);
+            autoOutputHandlerSubs = handler.subscribe(autoOutputHandlerSubs, () -> {
+                checkAutoOutput();
+                updateAmount();
+            });
         } else {
             if (autoOutputOwnSubs != null) {
                 autoOutputOwnSubs.unsubscribe();
@@ -247,26 +248,12 @@ public class EntangledQuantumTankMachine extends MetaMachine implements IAutoOut
         if (getOffsetTimer() % 5 == 0) {
             if (isAutoOutputFluids() && getOutputFacingFluids() != null) {
                 wrapper.exportToNearby(getOutputFacingFluids());
-                scheduleRenderUpdate();
             }
-//            updateAutoOutputSubscription();
         }
     }
 
-    // save and load data
-
-    @Override
-    public void saveCustomPersistedData(@NotNull CompoundTag tag, boolean forDrop) {
-        super.saveCustomPersistedData(tag, forDrop);
-        tag.putInt("Channel", channel);
-        tag.putBoolean("IsVoiding", isVoiding);
-    }
-
-    @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        setChannel(tag.getInt("Channel"));
-        isVoiding = tag.getBoolean("IsVoiding");
+    protected void updateAmount() {
+        storedAmount = handler.getStoredAmount();
     }
 
     // gui

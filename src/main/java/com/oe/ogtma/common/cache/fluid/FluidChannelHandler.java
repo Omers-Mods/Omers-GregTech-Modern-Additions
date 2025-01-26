@@ -4,13 +4,6 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.syncdata.IEnhancedManaged;
-import com.lowdragmc.lowdraglib.syncdata.IManagedStorage;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.RequireRerender;
-import com.lowdragmc.lowdraglib.syncdata.field.FieldManagedStorage;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -26,20 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor
-public class FluidChannelHandler implements IFluidHandler, IChannelHandler, IEnhancedManaged {
+public class FluidChannelHandler implements IFluidHandler, IChannelHandler {
 
-    @DescSynced
+    @Getter
     protected long capacity;
     @Getter
-    @DescSynced
-    @RequireRerender
     protected long storedAmount;
-    @DescSynced
-    @RequireRerender
+    @Getter
     protected FluidStack fluid = FluidStack.EMPTY;
     @Getter
-    @DescSynced
-    @RequireRerender
     protected FluidStack lockedFluid = FluidStack.EMPTY;
     protected List<TickableSubscription> subscribers = new ArrayList<>();
 
@@ -214,28 +202,21 @@ public class FluidChannelHandler implements IFluidHandler, IChannelHandler, IEnh
         }
     }
 
-    // sync boilerplate
-
-    public static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(FluidChannelHandler.class);
-    private final FieldManagedStorage syncStorage = new FieldManagedStorage(this);
-
     @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof FluidChannelHandler that)) return false;
+
+        return getCapacity() == that.getCapacity() && getStoredAmount() == that.getStoredAmount() &&
+                getFluid().equals(that.getFluid()) && getLockedFluid().equals(that.getLockedFluid());
     }
 
     @Override
-    public IManagedStorage getSyncStorage() {
-        return syncStorage;
-    }
-
-    @Override
-    public void onChanged() {
-        getCache().setDirty();
-    }
-
-    @Override
-    public void scheduleRenderUpdate() {
-        notifySubscribers();
+    public int hashCode() {
+        int result = Long.hashCode(getCapacity());
+        result = 31 * result + Long.hashCode(getStoredAmount());
+        result = 31 * result + getFluid().hashCode();
+        result = 31 * result + getLockedFluid().hashCode();
+        return result;
     }
 }

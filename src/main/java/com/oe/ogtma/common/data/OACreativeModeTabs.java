@@ -11,7 +11,7 @@ import com.tterrag.registrate.util.entry.RegistryEntry;
 
 import static com.oe.ogtma.OGTMA.*;
 
-public class CreativeModeTabs {
+public class OACreativeModeTabs {
 
     public static RegistryEntry<CreativeModeTab> GENERAL = REGISTRATE.defaultCreativeTab(MOD_ID,
             builder -> builder.displayItems(new RegistrateDisplayItemsGenerator(MOD_ID, REGISTRATE))

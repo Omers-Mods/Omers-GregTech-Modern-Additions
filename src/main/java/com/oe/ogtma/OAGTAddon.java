@@ -6,12 +6,12 @@ import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 
 import net.minecraft.data.recipes.FinishedRecipe;
 
-import com.oe.ogtma.common.data.Recipes;
+import com.oe.ogtma.common.data.OARecipes;
 
 import java.util.function.Consumer;
 
 @GTAddon
-public class OGTMAGTAddon implements IGTAddon {
+public class OAGTAddon implements IGTAddon {
 
     @Override
     public GTRegistrate getRegistrate() {
@@ -28,6 +28,6 @@ public class OGTMAGTAddon implements IGTAddon {
 
     @Override
     public void addRecipes(Consumer<FinishedRecipe> provider) {
-        Recipes.init(provider);
+        OARecipes.init(provider);
     }
 }
