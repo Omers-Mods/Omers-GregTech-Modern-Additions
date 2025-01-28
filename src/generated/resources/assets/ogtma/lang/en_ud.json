@@ -1,5 +1,13 @@
 {
+  "block.ogtma.ev_quarry": "ɹ§III ʎɹɹɐnὉ pǝɔuɐʌpⱯϛ§",
+  "block.ogtma.hv_quarry": "ɹ§II ʎɹɹɐnὉ pǝɔuɐʌpⱯ9§",
+  "block.ogtma.lv_quarry": "ɹ§ ʎɹɹɐnὉ ɔısɐᗺ",
   "block.ogtma.marker": "ɹǝʞɹɐW",
+  "block.ogtma.mv_quarry": "ɹ§ ʎɹɹɐnὉ pǝɔuɐʌpⱯq§",
   "entity.ogtma.quarry_drill": "ןןıɹᗡ ʎɹɹɐnὉ",
+  "ogtma.machine.quarry.tooltip": "ɐǝɹɐ pǝʞɹɐɯ ɐ sǝuıWㄥ§",
+  "ogtma.machine.quarry.working_area_max": "ǝbuɐɹ ɹǝʞɹɐɯ ǝɥʇ ʎq ʎןuo pǝʇıɯıן sı ɐǝɹɐ xɐɯ ǝɥ⟘q§",
+  "ogtma.option.quarry_mode.horizontal": "ןɐʇuozıɹoH",
+  "ogtma.option.quarry_mode.vertical": "ןɐɔıʇɹǝΛ",
   "tab.ogtma.tab": "suoıʇıppⱯ uɹǝpoW ɥɔǝ⟘bǝɹ⅁ s,ɹǝɯO"
 }

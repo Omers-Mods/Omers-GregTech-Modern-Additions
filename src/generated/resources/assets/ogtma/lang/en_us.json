@@ -1,5 +1,13 @@
 {
+  "block.ogtma.ev_quarry": "§5Advanced Quarry III§r",
+  "block.ogtma.hv_quarry": "§6Advanced Quarry II§r",
+  "block.ogtma.lv_quarry": "Basic Quarry §r",
   "block.ogtma.marker": "Marker",
+  "block.ogtma.mv_quarry": "§bAdvanced Quarry §r",
   "entity.ogtma.quarry_drill": "Quarry Drill",
+  "ogtma.machine.quarry.tooltip": "§7Mines a marked area",
+  "ogtma.machine.quarry.working_area_max": "§bThe max area is limited only by the marker range",
+  "ogtma.option.quarry_mode.horizontal": "Horizontal",
+  "ogtma.option.quarry_mode.vertical": "Vertical",
   "tab.ogtma.tab": "Omer's GregTech Modern Additions"
 }

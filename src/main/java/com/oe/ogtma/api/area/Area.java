@@ -44,6 +44,22 @@ public class Area implements INBTSerializable<CompoundTag> {
         }
     }
 
+    public boolean isEmpty() {
+        return minX == maxX && minY == maxY && minZ == maxZ;
+    }
+
+    public int getXSize() {
+        return maxX - minX;
+    }
+
+    public int getYSize() {
+        return maxY - minY;
+    }
+
+    public int getZSize() {
+        return maxZ - minZ;
+    }
+
     @Override
     public CompoundTag serializeNBT() {
         var tag = new CompoundTag();
@@ -62,5 +78,25 @@ public class Area implements INBTSerializable<CompoundTag> {
             minZ = arr[4];
             maxZ = arr[5];
         }
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Area area)) return false;
+
+        return getMinX() == area.getMinX() && getMaxX() == area.getMaxX() && getMinY() == area.getMinY() &&
+                getMaxY() == area.getMaxY() && getMinZ() == area.getMinZ() && getMaxZ() == area.getMaxZ();
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getMinX();
+        result = 31 * result + getMaxX();
+        result = 31 * result + getMinY();
+        result = 31 * result + getMaxY();
+        result = 31 * result + getMinZ();
+        result = 31 * result + getMaxZ();
+        return result;
     }
 }

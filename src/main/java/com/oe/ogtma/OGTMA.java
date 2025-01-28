@@ -42,6 +42,8 @@ public class OGTMA {
         OANetwork.init();
 
         REGISTRATE.registerRegistrate();
+
+        OADatagen.init();
     }
 
     public static ResourceLocation id(String path) {

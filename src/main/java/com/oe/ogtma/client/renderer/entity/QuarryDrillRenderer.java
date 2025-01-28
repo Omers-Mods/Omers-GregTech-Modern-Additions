@@ -59,6 +59,9 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
         for (var target : drill.getTargets()) {
             center.set(target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f);
             var state = level.getBlockState(target);
+            if (state.isAir()) {
+                continue;
+            }
             if (state.getBlock() instanceof MaterialBlock materialBlock) {
                 color = materialBlock.material.getMaterialRGB();
             } else {

@@ -9,14 +9,16 @@ import net.minecraftforge.common.util.INBTSerializable;
 import com.oe.ogtma.common.blockentity.MarkerBlockEntity;
 import lombok.NoArgsConstructor;
 
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+@NoArgsConstructor
 public class QuarryArea extends Area {
 
-    protected final int minBuildHeight;
-    protected final int maxBuildHeight;
-    protected final AABB viewBox;
+    protected int minBuildHeight;
+    protected int maxBuildHeight;
+    protected AABB viewBox;
 
     public QuarryArea(Level level, int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
         super(minX, maxX, minY, maxY, minZ, maxZ);
@@ -30,6 +32,34 @@ public class QuarryArea extends Area {
         this.minBuildHeight = marker.getLevel().getMinBuildHeight();
         this.maxBuildHeight = marker.getLevel().getMaxBuildHeight();
         this.viewBox = new AABB(minX, minBuildHeight, minZ, maxX, maxBuildHeight, maxZ);
+    }
+
+    @Override
+    public CompoundTag serializeNBT() {
+        var tag = super.serializeNBT();
+        tag.putInt("MinBuild", minBuildHeight);
+        tag.putInt("MaxBuild", maxBuildHeight);
+        var box = ByteBuffer.allocate(48)
+                .putDouble(viewBox.minX).putDouble(viewBox.minY).putDouble(viewBox.minZ)
+                .putDouble(viewBox.maxX).putDouble(viewBox.maxY).putDouble(viewBox.maxZ)
+                .array();
+        tag.putByteArray("Box", box);
+        return tag;
+    }
+
+    @Override
+    public void deserializeNBT(CompoundTag tag) {
+        super.deserializeNBT(tag);
+        minBuildHeight = tag.getInt("MinBuild");
+        maxBuildHeight = tag.getInt("MaxBuild");
+        var box = tag.getByteArray("Box");
+        if (box.length < 48) {
+            viewBox = new AABB(BlockPos.ZERO);
+        } else {
+            var buf = ByteBuffer.wrap(box);
+            viewBox = new AABB(buf.getDouble(), buf.getDouble(), buf.getDouble(), buf.getDouble(), buf.getDouble(),
+                    buf.getDouble());
+        }
     }
 
     public class Iterators {
