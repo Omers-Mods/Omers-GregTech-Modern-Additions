@@ -129,7 +129,7 @@ public class QuarryMachine extends WorkableTieredMachine
     }
 
     //////////////////////////////////////
-    // ***** Initialization ******//
+    // ********* Initialization ********//
     //////////////////////////////////////
 
     @Override
@@ -273,7 +273,7 @@ public class QuarryMachine extends WorkableTieredMachine
     }
 
     //////////////////////////////////////
-    // *********** GUI ***********//
+    // ************** GUI **************//
     //////////////////////////////////////
 
     public static BiFunction<ResourceLocation, Integer, EditableMachineUI> EDITABLE_UI_CREATOR = Util
@@ -407,7 +407,7 @@ public class QuarryMachine extends WorkableTieredMachine
 
 
     //////////////////////////////////////
-    // ******* Interaction *******//
+    // ********** Interaction **********//
     //////////////////////////////////////
     @NotNull
     @Override
@@ -423,7 +423,7 @@ public class QuarryMachine extends WorkableTieredMachine
 
 
     //////////////////////////////////////
-    // ******* Auto Output *******//
+    // ********** Auto Output **********//
     //////////////////////////////////////
     @Override
     public boolean hasAutoOutputFluid() {
