@@ -24,7 +24,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @SuppressWarnings("deprecation")
 @ParametersAreNonnullByDefault
 public class MarkerBlock extends TorchBlock implements EntityBlock {
-    
+
     private long counter;
 
     public MarkerBlock(Properties pProperties) {

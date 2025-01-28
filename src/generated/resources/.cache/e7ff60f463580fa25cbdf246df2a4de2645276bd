@@ -1,8 +1,8 @@
-// 1.20.1	2025-01-26T16:41:58.2046684	Registrate Provider for ogtma [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), generic_server_provider, Blockstates, Item models, Lang (en_us/en_ud), generic_client_provider]
+// 1.20.1	2025-01-27T18:38:40.518785	Registrate Provider for ogtma [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), generic_server_provider, Blockstates, Item models, Lang (en_us/en_ud), generic_client_provider]
 91067b98155135caced9320e9ae99cb1d11dcf8f assets/ogtma/blockstates/marker.json
 119518a2c5e5b281499e247a548a429957692c2c assets/ogtma/blockstates/wall_marker.json
-f8be026a178f6c9df09d632484a7045b9ba7916c assets/ogtma/lang/en_ud.json
-438e4d41786804b5497c200b9241725b130bef1c assets/ogtma/lang/en_us.json
+0ab5b87a9e1e12235d2f05caa9a790f7b5a09923 assets/ogtma/lang/en_ud.json
+611a0b0fa367878e99384117248ef9b28b9dddce assets/ogtma/lang/en_us.json
 3ffc606cdaa8357d97fb3b583fa457d941f21370 assets/ogtma/models/block/marker.json
 a93a6bed2b84366a2725ddda39a3801d62b102b4 assets/ogtma/models/block/wall_marker.json
 d256ff5916de8ddcf00e9ffc9c3cd6d804fb03fe assets/ogtma/models/item/marker.json

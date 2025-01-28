@@ -6,9 +6,9 @@ import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
+import com.oe.ogtma.api.data.accessor.OAEntityDataSerializers;
 import com.oe.ogtma.common.data.*;
 import com.oe.ogtma.common.network.OANetwork;
 import org.apache.logging.log4j.LogManager;
@@ -29,27 +29,23 @@ public class OGTMA {
         var bus = FMLJavaModLoadingContext.get().getModEventBus();
 
         bus.addGenericListener(MachineDefinition.class, this::registerMachines);
-        bus.addListener(this::constructMod);
     }
 
     private void init() {
+        OAEntityDataSerializers.init();
+        OACreativeModeTabs.init();
         REGISTRATE.creativeModeTab(OACreativeModeTabs.GENERAL);
+        OABlocks.init();
+        OAItems.init();
+        OABlockEntities.init();
+        OAEntities.init();
+        OANetwork.init();
+
+        REGISTRATE.registerRegistrate();
     }
 
     public static ResourceLocation id(String path) {
         return new ResourceLocation(MOD_ID, path);
-    }
-
-    private void constructMod(final FMLConstructModEvent event) {
-        event.enqueueWork(() -> {
-            OACreativeModeTabs.init();
-            OABlocks.init();
-            OAItems.init();
-            OABlockEntities.init();
-            OANetwork.init();
-
-            REGISTRATE.registerRegistrate();
-        });
     }
 
     private void registerMachines(final GTCEuAPI.RegisterEvent<ResourceLocation, MachineDefinition> event) {

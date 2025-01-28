@@ -5,14 +5,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.StandingAndWallBlockItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.client.model.generators.BlockModelBuilder;
+import net.minecraftforge.client.model.generators.ConfiguredModel;
 
 import com.oe.ogtma.common.block.marker.MarkerBlock;
 import com.oe.ogtma.common.block.marker.WallMarkerBlock;
 import com.tterrag.registrate.providers.ProviderType;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
-import net.minecraftforge.client.model.generators.ConfiguredModel;
-import net.minecraftforge.client.model.generators.ItemModelBuilder;
 
 import static com.oe.ogtma.OGTMA.REGISTRATE;
 
@@ -51,12 +50,12 @@ public class OABlocks {
                                 default -> 0;
                             };
                             if (facing == Direction.NORTH) {
-                               yRot = 270;
-                           }
-                           return ConfiguredModel.builder()
-                                   .modelFile(model)
-                                   .rotationY(yRot)
-                                   .build();
+                                yRot = 270;
+                            }
+                            return ConfiguredModel.builder()
+                                    .modelFile(model)
+                                    .rotationY(yRot)
+                                    .build();
                         });
             })
             .loot((table, block) -> table.dropOther(block, MARKER.asItem()))

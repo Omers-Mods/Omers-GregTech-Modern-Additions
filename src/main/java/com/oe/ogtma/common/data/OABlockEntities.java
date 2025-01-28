@@ -1,6 +1,6 @@
 package com.oe.ogtma.common.data;
 
-import com.oe.ogtma.client.renderer.MarkerRenderer;
+import com.oe.ogtma.client.renderer.block.MarkerRenderer;
 import com.oe.ogtma.common.blockentity.MarkerBlockEntity;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 
