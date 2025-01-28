@@ -7,6 +7,11 @@
   "entity.ogtma.quarry_drill": "Quarry Drill",
   "ogtma.machine.quarry.tooltip": "§7Mines a marked area",
   "ogtma.machine.quarry.working_area_max": "§bThe max area is limited only by the marker range",
+  "ogtma.option.quarry_fluid_mode": "Fluid Mode",
+  "ogtma.option.quarry_fluid_mode.collect": "Collect",
+  "ogtma.option.quarry_fluid_mode.stop": "Stop",
+  "ogtma.option.quarry_fluid_mode.void": "Void Excess",
+  "ogtma.option.quarry_mode": "Quarry Mode",
   "ogtma.option.quarry_mode.horizontal": "Horizontal",
   "ogtma.option.quarry_mode.vertical": "Vertical",
   "tab.ogtma.tab": "Omer's GregTech Modern Additions"

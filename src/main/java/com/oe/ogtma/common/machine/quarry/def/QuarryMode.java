@@ -1,10 +1,8 @@
 package com.oe.ogtma.common.machine.quarry.def;
 
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
-
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
-
 import com.oe.ogtma.OGTMA;
 import lombok.Getter;
 
@@ -25,4 +23,8 @@ public enum QuarryMode implements EnumSelectorWidget.SelectableEnum {
 
     private final String tooltip;
     private final IGuiTexture icon;
+
+    public static QuarryMode next(int ordinal) {
+        return values()[ordinal % values().length];
+    }
 }

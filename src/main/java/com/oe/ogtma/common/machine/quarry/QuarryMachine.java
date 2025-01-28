@@ -8,6 +8,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.WidgetUtils;
 import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
 import com.gregtechceu.gtceu.api.gui.editor.EditableUI;
+import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
@@ -35,6 +36,7 @@ import com.lowdragmc.lowdraglib.syncdata.annotation.RequireRerender;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 import com.lowdragmc.lowdraglib.utils.Position;
 
+import com.oe.ogtma.api.gui.configurator.EnumSelectorConfigurator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.Util;
@@ -81,7 +83,7 @@ public class QuarryMachine extends WorkableTieredMachine
     @Persisted
     @Getter
     @Setter
-    protected QuarryFluidMode quarryFluidMode;
+    protected QuarryFluidMode quarryFluidMode = QuarryFluidMode.COLLECT;
     @Getter
     protected final long euPerTick;
     @Persisted
@@ -276,6 +278,14 @@ public class QuarryMachine extends WorkableTieredMachine
     // ************** GUI **************//
     //////////////////////////////////////
 
+
+    @Override
+    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
+        IFancyUIMachine.super.attachConfigurators(configuratorPanel);
+        configuratorPanel.attachConfigurators(new EnumSelectorConfigurator<>(quarryMode, QuarryMode.values(), this::setQuarryMode));
+        configuratorPanel.attachConfigurators(new EnumSelectorConfigurator<>(quarryFluidMode, QuarryFluidMode.values(), this::setQuarryFluidMode));
+    }
+
     public static BiFunction<ResourceLocation, Integer, EditableMachineUI> EDITABLE_UI_CREATOR = Util
             .memoize((path, inventorySize) -> new EditableMachineUI("misc", path, () -> {
                 var template = createTemplate(inventorySize).createDefault();
@@ -307,7 +317,7 @@ public class QuarryMachine extends WorkableTieredMachine
             var height = Math.max(rowSize * 18, 80);
             var group = new WidgetGroup(0, 0, width, height);
 
-            WidgetGroup slots = new WidgetGroup(120, (height - rowSize * 18) / 2, rowSize * 18, rowSize * 18);
+            var slots = new WidgetGroup(120, (height - rowSize * 18) / 2, rowSize * 18, rowSize * 18);
             for (int y = 0; y < rowSize; y++) {
                 for (int x = 0; x < rowSize; x++) {
                     var index = y * rowSize + x;
