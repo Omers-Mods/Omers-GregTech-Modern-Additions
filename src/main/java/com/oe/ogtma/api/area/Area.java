@@ -17,7 +17,7 @@ public class Area implements INBTSerializable<CompoundTag> {
 
     protected int minX, maxX, minY, maxY, minZ, maxZ;
 
-    public Area(MarkerBlockEntity marker) {
+    public void setFromMarker(MarkerBlockEntity marker) {
         var pos = marker.getBlockPos();
         minX = maxX = pos.getX();
         minY = maxY = pos.getY();
@@ -81,7 +81,7 @@ public class Area implements INBTSerializable<CompoundTag> {
     }
 
     @Override
-    public final boolean equals(Object o) {
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Area area)) return false;
 

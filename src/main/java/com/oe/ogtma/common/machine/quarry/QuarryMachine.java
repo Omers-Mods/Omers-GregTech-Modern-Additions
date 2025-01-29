@@ -31,12 +31,12 @@ import com.lowdragmc.lowdraglib.gui.widget.DraggableScrollableWidgetGroup;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.syncdata.ISubscription;
 import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
+import com.lowdragmc.lowdraglib.syncdata.annotation.DropSaved;
 import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib.syncdata.annotation.RequireRerender;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 import com.lowdragmc.lowdraglib.utils.Position;
 
-import com.oe.ogtma.api.gui.configurator.EnumSelectorConfigurator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.Util;
@@ -49,14 +49,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 
+import com.oe.ogtma.api.area.QuarryArea;
+import com.oe.ogtma.api.gui.configurator.EnumSelectorConfigurator;
+import com.oe.ogtma.common.entity.quarry.QuarryDrillEntity;
 import com.oe.ogtma.common.machine.quarry.def.IQuarry;
 import com.oe.ogtma.common.machine.quarry.def.QuarryFluidMode;
 import com.oe.ogtma.common.machine.quarry.def.QuarryMode;
 import com.oe.ogtma.common.machine.trait.quarry.QuarryLogic;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraftforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -76,14 +79,31 @@ public class QuarryMachine extends WorkableTieredMachine
     protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(QuarryMachine.class,
             WorkableTieredMachine.MANAGED_FIELD_HOLDER);
 
+    public static final int INITIAL = 0;
+    public static final int CLEARING = 1;
+    public static final int QUARRYING = 2;
+
     @Persisted
+    @Getter
+    @Setter
+    protected int quarryStage = 0;
+    @Persisted
+    @DropSaved
     @Getter
     @Setter
     protected QuarryMode quarryMode = QuarryMode.HORIZONTAL;
     @Persisted
+    @DropSaved
     @Getter
     @Setter
     protected QuarryFluidMode quarryFluidMode = QuarryFluidMode.COLLECT;
+    @Nullable
+    @Persisted
+    @Getter
+    protected QuarryArea area;
+    @Getter
+    @Setter
+    protected QuarryDrillEntity drill;
     @Getter
     protected final long euPerTick;
     @Persisted
@@ -207,6 +227,11 @@ public class QuarryMachine extends WorkableTieredMachine
             if (getLevel() instanceof ServerLevel serverLevel) {
                 serverLevel.getServer().tell(new TickTask(0, this::updateAutoOutputSubscription));
             }
+            if (area != null) {
+                area.setQuarry(this);
+            } else {
+                area = new QuarryArea(this);
+            }
             updateBatterySubscription();
             exportItemSubs = exportItems.addChangedListener(this::updateAutoOutputSubscription);
             exportFluidSubs = exportFluids.addChangedListener(this::updateAutoOutputSubscription);
@@ -230,6 +255,10 @@ public class QuarryMachine extends WorkableTieredMachine
             energySubs.unsubscribe();
             energySubs = null;
         }
+        if (drill != null) {
+            drill.discard();
+            drill = null;
+        }
     }
 
     //////////////////////////////////////
@@ -239,7 +268,10 @@ public class QuarryMachine extends WorkableTieredMachine
     protected void updateAutoOutputSubscription() {
         var outputFacingItems = getOutputFacingItems();
         var outputFacingFluids = getOutputFacingFluids();
-        if ((isAutoOutputItems() && !exportItems.isEmpty() && outputFacingItems != null && GTTransferUtils.hasAdjacentItemHandler(getLevel(), getPos(), outputFacingItems)) || (isAutoOutputFluids() && !exportFluids.isEmpty() && outputFacingFluids != null && GTTransferUtils.hasAdjacentFluidHandler(getLevel(), getPos(), outputFacingFluids))) {
+        if ((isAutoOutputItems() && !exportItems.isEmpty() && outputFacingItems != null &&
+                GTTransferUtils.hasAdjacentItemHandler(getLevel(), getPos(), outputFacingItems)) ||
+                (isAutoOutputFluids() && !exportFluids.isEmpty() && outputFacingFluids != null &&
+                        GTTransferUtils.hasAdjacentFluidHandler(getLevel(), getPos(), outputFacingFluids))) {
             autoOutputSubs = subscribeServerTick(autoOutputSubs, this::autoOutput);
         } else if (autoOutputSubs != null) {
             autoOutputSubs.unsubscribe();
@@ -274,16 +306,22 @@ public class QuarryMachine extends WorkableTieredMachine
         }
     }
 
+    protected void setArea(QuarryArea area) {
+        this.area = area;
+        this.area.setQuarry(this);
+    }
+
     //////////////////////////////////////
     // ************** GUI **************//
     //////////////////////////////////////
 
-
     @Override
     public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
         IFancyUIMachine.super.attachConfigurators(configuratorPanel);
-        configuratorPanel.attachConfigurators(new EnumSelectorConfigurator<>(quarryMode, QuarryMode.values(), this::setQuarryMode));
-        configuratorPanel.attachConfigurators(new EnumSelectorConfigurator<>(quarryFluidMode, QuarryFluidMode.values(), this::setQuarryFluidMode));
+        configuratorPanel.attachConfigurators(
+                new EnumSelectorConfigurator<>(quarryMode, QuarryMode.values(), this::setQuarryMode));
+        configuratorPanel.attachConfigurators(
+                new EnumSelectorConfigurator<>(quarryFluidMode, QuarryFluidMode.values(), this::setQuarryFluidMode));
     }
 
     public static BiFunction<ResourceLocation, Integer, EditableMachineUI> EDITABLE_UI_CREATOR = Util
@@ -373,7 +411,6 @@ public class QuarryMachine extends WorkableTieredMachine
     }
 
     protected void addDisplayText(@NotNull List<Component> textList) {
-        var area = getRecipeLogic().getArea();
         if (area != null) {
             var pos = getRecipeLogic().getLastMiningPos();
             if (pos != null) {
@@ -415,14 +452,12 @@ public class QuarryMachine extends WorkableTieredMachine
         return false;
     }
 
-
     //////////////////////////////////////
     // ********** Interaction **********//
     //////////////////////////////////////
     @NotNull
     @Override
     public List<Component> getDataInfo(PortableScannerBehavior.DisplayMode mode) {
-        var area = getRecipeLogic().getArea();
         if ((mode == PortableScannerBehavior.DisplayMode.SHOW_ALL ||
                 mode == PortableScannerBehavior.DisplayMode.SHOW_MACHINE_INFO) && area != null) {
             return Collections.singletonList(
@@ -430,7 +465,6 @@ public class QuarryMachine extends WorkableTieredMachine
         }
         return new ArrayList<>();
     }
-
 
     //////////////////////////////////////
     // ********** Auto Output **********//

@@ -11,7 +11,7 @@ public class OALangHandler {
         provider.add("ogtma.option.quarry_mode", "Quarry Mode");
         provider.add("ogtma.option.quarry_mode.horizontal", "Horizontal");
         provider.add("ogtma.option.quarry_mode.vertical", "Vertical");
-        
+
         // QuarryFluidMode tooltips
         provider.add("ogtma.option.quarry_fluid_mode", "Fluid Mode");
         provider.add("ogtma.option.quarry_fluid_mode.collect", "Collect");

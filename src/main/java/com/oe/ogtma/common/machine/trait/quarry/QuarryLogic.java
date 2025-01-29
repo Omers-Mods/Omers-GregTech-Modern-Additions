@@ -15,19 +15,25 @@ import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.Tags;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
-import com.oe.ogtma.api.area.QuarryArea;
-import com.oe.ogtma.common.entity.quarry.QuarryDrillEntity;
 import com.oe.ogtma.common.machine.quarry.def.IQuarry;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import java.util.*;
 
@@ -66,13 +72,6 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     @Persisted
     @Getter
     protected BlockPos.MutableBlockPos lastMiningPos;
-    @Nullable
-    @Persisted
-    @Getter
-    protected QuarryArea area;
-    @Getter
-    @Setter
-    protected QuarryDrillEntity drillEntity;
     @Persisted
     @Getter
     protected boolean done;
@@ -82,6 +81,8 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     protected final Table<IO, RecipeCapability<?>, List<IRecipeHandler<?>>> capabilitiesProxy;
     protected final ItemRecipeHandler inputItemHandler, outputItemHandler;
     protected final IgnoreEnergyRecipeHandler inputEnergyHandler;
+
+    protected Iterator<BlockPos> blockIterator;
 
     @SuppressWarnings("UnstableApiUsage")
     public QuarryLogic(IRecipeLogicMachine machine, int speed, int fortune, Object... args) {

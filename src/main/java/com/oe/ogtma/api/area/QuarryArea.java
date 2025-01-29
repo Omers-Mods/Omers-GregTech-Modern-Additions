@@ -1,187 +1,143 @@
 package com.oe.ogtma.api.area;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.util.INBTSerializable;
 
-import com.oe.ogtma.common.blockentity.MarkerBlockEntity;
+import com.oe.ogtma.common.machine.quarry.QuarryMachine;
+import com.oe.ogtma.common.machine.quarry.def.IQuarry;
+import com.oe.ogtma.common.machine.quarry.def.QuarryMode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
-import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 @NoArgsConstructor
-public class QuarryArea extends Area {
+public class QuarryArea extends Area implements Iterable<BlockPos> {
 
-    protected int minBuildHeight;
-    protected int maxBuildHeight;
-    protected AABB viewBox;
+    protected AABB cachedViewBox;
+    @Setter
+    protected IQuarry quarry;
 
-    public QuarryArea(Level level, int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
-        super(minX, maxX, minY, maxY, minZ, maxZ);
-        this.minBuildHeight = level.getMinBuildHeight();
-        this.maxBuildHeight = level.getMaxBuildHeight();
-        this.viewBox = new AABB(minX, minBuildHeight, minZ, maxX, maxBuildHeight, maxZ);
+    public QuarryArea(IQuarry quarry) {
+        this.quarry = quarry;
     }
 
-    public QuarryArea(MarkerBlockEntity marker) {
-        super(marker);
-        this.minBuildHeight = marker.getLevel().getMinBuildHeight();
-        this.maxBuildHeight = marker.getLevel().getMaxBuildHeight();
-        this.viewBox = new AABB(minX, minBuildHeight, minZ, maxX, maxBuildHeight, maxZ);
-    }
-
-    @Override
-    public CompoundTag serializeNBT() {
-        var tag = super.serializeNBT();
-        tag.putInt("MinBuild", minBuildHeight);
-        tag.putInt("MaxBuild", maxBuildHeight);
-        var box = ByteBuffer.allocate(48)
-                .putDouble(viewBox.minX).putDouble(viewBox.minY).putDouble(viewBox.minZ)
-                .putDouble(viewBox.maxX).putDouble(viewBox.maxY).putDouble(viewBox.maxZ)
-                .array();
-        tag.putByteArray("Box", box);
-        return tag;
-    }
-
-    @Override
-    public void deserializeNBT(CompoundTag tag) {
-        super.deserializeNBT(tag);
-        minBuildHeight = tag.getInt("MinBuild");
-        maxBuildHeight = tag.getInt("MaxBuild");
-        var box = tag.getByteArray("Box");
-        if (box.length < 48) {
-            viewBox = new AABB(BlockPos.ZERO);
-        } else {
-            var buf = ByteBuffer.wrap(box);
-            viewBox = new AABB(buf.getDouble(), buf.getDouble(), buf.getDouble(), buf.getDouble(), buf.getDouble(),
-                    buf.getDouble());
+    public AABB getViewBox() {
+        if (cachedViewBox == null) {
+            var minY = quarry == null || quarry.getQuarryStage() != QuarryMachine.QUARRYING ? this.minY :
+                    quarry.getLevel().getMinBuildHeight() + 1;
+            cachedViewBox = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
         }
+        return cachedViewBox;
     }
 
-    public class Iterators {
+    @NotNull
+    @Override
+    public Iterator<BlockPos> iterator() {
+        return new iterator(this);
+    }
 
-        @NoArgsConstructor
-        public class Volume implements Iterator<Surface>, INBTSerializable<CompoundTag> {
+    public static class iterator implements Iterator<BlockPos> {
 
-            protected int y;
-            protected boolean up;
-            protected boolean ignoreLimit;
+        @Getter
+        protected int minX, minY, minZ, maxX, maxY, maxZ;
+        @Getter
+        @Setter
+        protected int x, y, z;
+        protected boolean xPos, zPos;
+        @Getter
+        @Setter
+        protected boolean yPriority;
 
-            public Volume(int y, boolean up, boolean ignoreLimit) {
-                this.y = y;
-                this.up = up;
-                this.ignoreLimit = ignoreLimit;
-            }
+        public iterator(QuarryArea area) {
+            minX = area.getMinX();
+            minY = area.quarry.getQuarryStage() == QuarryMachine.QUARRYING ?
+                    area.quarry.getLevel().getMinBuildHeight() : area.getMinY();
+            minZ = area.getMinZ();
+            maxX = area.getMaxX();
+            y = maxY = area.getMaxY();
+            maxZ = area.getMaxZ();
+            yPriority = area.quarry.getQuarryMode() == QuarryMode.VERTICAL;
+            var pos = area.quarry.getPos();
+            x = Mth.clamp(pos.getX(), minX, maxX);
+            z = Mth.clamp(pos.getZ(), minZ, maxZ);
+            xPos = x == minX;
+            zPos = z == minZ;
+        }
 
-            @Override
-            public boolean hasNext() {
-                if (up) {
-                    return (y + 1) <= (ignoreLimit ? maxBuildHeight : maxY);
-                } else {
-                    return (y - 1) > (ignoreLimit ? minBuildHeight : minY);
-                }
-            }
-
-            @Override
-            public Surface next() {
-                return new Surface(minX, y, minZ, true, true);
-            }
-
-            @Override
-            public CompoundTag serializeNBT() {
-                var tag = new CompoundTag();
-                tag.putInt("Y", y);
-                tag.putBoolean("Positive", up);
-                tag.putBoolean("IgnoreLimit", ignoreLimit);
-                return tag;
-            }
-
-            @Override
-            public void deserializeNBT(CompoundTag tag) {
-                y = tag.getInt("Y");
-                up = tag.getBoolean("Positive");
-                ignoreLimit = tag.getBoolean("IgnoreLimit");
+        public int nextX() {
+            if (xPos) {
+                var p = x + 1;
+                return p >= maxX ? x : p;
+            } else {
+                var n = x - 1;
+                return n <= minX ? x : n;
             }
         }
 
-        @NoArgsConstructor
-        public class Surface implements Iterator<BlockPos>, INBTSerializable<CompoundTag> {
+        public int nextY() {
+            var n = y - 1;
+            return n <= minY ? y : n;
+        }
 
-            protected BlockPos.MutableBlockPos pos;
-            protected boolean xPos;
-            protected boolean zPos;
-
-            public Surface(int x, int y, int z, boolean xPos, boolean zPos) {
-                this.pos = new BlockPos.MutableBlockPos(x, y, z);
-                this.xPos = xPos;
-                this.zPos = zPos;
+        public int nextZ() {
+            if (zPos) {
+                var p = z + 1;
+                return p >= maxZ ? z : p;
+            } else {
+                var n = z - 1;
+                return n <= minZ ? z : n;
             }
+        }
 
-            public int nextX() {
-                if (xPos) {
-                    var p = pos.getX() + 1;
-                    return p >= maxX ? pos.getX() : p;
-                } else {
-                    var n = pos.getX() - 1;
-                    return n <= minX ? pos.getX() : n;
-                }
-            }
+        // todo: make it chunk based (dig out a chunk then move to the next)
+        @Override
+        public boolean hasNext() {
+            return x != nextX() || y != nextY() || z != nextZ();
+        }
 
-            public int nextZ() {
-                if (zPos) {
-                    var p = pos.getZ() + 1;
-                    return p >= maxZ ? pos.getZ() : p;
-                } else {
-                    var n = pos.getZ() - 1;
-                    return n <= minZ ? pos.getZ() : n;
-                }
-            }
-
-            @Override
-            public boolean hasNext() {
-                if (nextX() == pos.getX()) {
-                    return nextZ() != pos.getZ();
-                }
-                return true;
-            }
-
-            @Override
-            public BlockPos next() {
-                var x = nextX();
-                if (x == pos.getX()) {
-                    xPos = !xPos;
-                    var z = nextZ();
-                    if (z == pos.getZ()) {
-                        throw new NoSuchElementException();
+        @Override
+        public BlockPos next() {
+            if (yPriority) {
+                var nextY = nextY();
+                if (nextY == y) {
+                    y = maxY;
+                    var nextX = nextX();
+                    if (nextX == x) {
+                        xPos = !xPos;
+                        z = nextZ();
+                    } else {
+                        x = nextX;
                     }
-                    pos.setZ(z);
                 } else {
-                    pos.setX(x);
+                    y = nextY;
                 }
-                return pos.immutable();
+            } else {
+                var nextX = nextX();
+                if (nextX == x) {
+                    xPos = !xPos;
+                    var nextZ = nextZ();
+                    if (nextZ == z) {
+                        zPos = !zPos;
+                        y = nextY();
+                    } else {
+                        z = nextZ;
+                    }
+                } else {
+                    x = nextX;
+                }
             }
-
-            @Override
-            public CompoundTag serializeNBT() {
-                var tag = new CompoundTag();
-                tag.putInt("X", pos.getX());
-                tag.putInt("Y", pos.getY());
-                tag.putInt("Z", pos.getZ());
-                tag.putBoolean("XPositive", xPos);
-                tag.putBoolean("ZPositive", zPos);
-                return tag;
-            }
-
-            @Override
-            public void deserializeNBT(CompoundTag tag) {
-                pos = new BlockPos.MutableBlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z"));
-                xPos = tag.getBoolean("XPositive");
-                zPos = tag.getBoolean("ZPositive");
-            }
+            return new BlockPos(x, y, z);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof QuarryArea)) return false;
+        return super.equals(o);
     }
 }
