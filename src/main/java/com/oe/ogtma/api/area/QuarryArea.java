@@ -1,5 +1,6 @@
 package com.oe.ogtma.api.area;
 
+import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
+@MethodsReturnNonnullByDefault
 @NoArgsConstructor
 public class QuarryArea extends Area implements Iterable<BlockPos> {
 

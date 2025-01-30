@@ -29,8 +29,6 @@ public interface IQuarry {
 
     QuarryDrillEntity getDrill();
 
-    void setDrill(QuarryDrillEntity drill);
-
     Level getLevel();
 
     BlockPos getPos();

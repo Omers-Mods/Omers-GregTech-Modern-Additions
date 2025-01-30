@@ -106,8 +106,6 @@ public class QuarryMachine extends WorkableTieredMachine
     @Persisted
     @Getter
     protected QuarryArea area;
-    @Getter
-    @Setter
     protected QuarryDrillEntity drill;
     @Getter
     protected final long euPerTick;
@@ -271,6 +269,27 @@ public class QuarryMachine extends WorkableTieredMachine
         return tier;
     }
 
+    @Nullable
+    public QuarryDrillEntity getDrill() {
+        if (isRemote()) {
+            return drill;
+        }
+        if (getQuarryStage() == INITIAL || getRecipeLogic().isDone()) {
+            drill = null;
+        } else {
+            if (drill == null) {
+                drill = OAEntities.QUARRY_DRILL.create(getLevel());
+                getLevel().addFreshEntity(drill);
+                drill.setPos(getRecipeLogic().getLast().above(3).getCenter());
+            }
+            drill.setQuarryPos(getPos());
+            drill.setTargetAir(getQuarryStage() == CLEARING);
+            drill.setAirColor(GTMaterials.Copper.getMaterialRGB());
+            drill.setQuarryBox(area == null ? drill.getBoundingBox() : area.getViewBox());
+        }
+        return drill;
+    }
+
     protected void tryFormQuarry() {
         if (!isRemote() && getOffsetTimer() % 10 == 0) {
             var pos = getPos();
@@ -328,15 +347,7 @@ public class QuarryMachine extends WorkableTieredMachine
                     formingSubs.unsubscribe();
                     formingSubs = null;
                 }
-                if (drill == null) {
-                    drill = OAEntities.QUARRY_DRILL.create(getLevel());
-                    getLevel().addFreshEntity(drill);
-                    drill.setPos(getPos().relative(Direction.UP, 2).getCenter());
-                    drill.setQuarryPos(getPos());
-                    drill.setTargetAir(stage == CLEARING);
-                    drill.setAirColor(GTMaterials.Copper.getMaterialRGB());
-                }
-                drill.setQuarryBox(area.getViewBox());
+                getDrill();
             }
         }
         this.quarryStage = stage;

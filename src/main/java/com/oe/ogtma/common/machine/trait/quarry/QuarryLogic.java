@@ -110,6 +110,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         this.capabilitiesProxy.put(IO.IN, inputItemHandler.getCapability(), List.of(inputItemHandler));
         this.capabilitiesProxy.put(IO.IN, inputEnergyHandler.getCapability(), List.of(inputEnergyHandler));
         this.capabilitiesProxy.put(IO.OUT, outputItemHandler.getCapability(), List.of(outputItemHandler));
+        this.last = quarry.getPos();
     }
 
     //////////////////////////////////////
