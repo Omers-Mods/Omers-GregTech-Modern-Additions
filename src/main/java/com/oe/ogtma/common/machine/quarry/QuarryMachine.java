@@ -279,7 +279,8 @@ public class QuarryMachine extends WorkableTieredMachine
         } else {
             if (drill == null) {
                 drill = OAEntities.QUARRY_DRILL.create(getLevel());
-                drill.setPos((double) (area.getMaxX() + area.getMinX()) / 2, area.getMaxY(), (double) (area.getMaxZ() + area.getMinZ()) / 2);
+                drill.setPos((double) (area.getMaxX() + area.getMinX()) / 2, area.getMaxY(),
+                        (double) (area.getMaxZ() + area.getMinZ()) / 2);
                 getLevel().addFreshEntity(drill);
             }
             drill.setQuarryPos(getPos());

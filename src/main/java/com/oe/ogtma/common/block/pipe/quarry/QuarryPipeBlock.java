@@ -1,11 +1,9 @@
 package com.oe.ogtma.common.block.pipe.quarry;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.client.model.PipeModel;
 
 import com.lowdragmc.lowdraglib.client.renderer.IBlockRendererProvider;
 
-import com.oe.ogtma.client.model.pipe.QuarryPipeModel;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
@@ -17,6 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+import com.oe.ogtma.client.model.pipe.QuarryPipeModel;
 import com.oe.ogtma.client.renderer.block.QuarryPipeRenderer;
 import com.oe.ogtma.common.blockentity.pipe.QuarryPipeBlockEntity;
 import com.oe.ogtma.common.data.OABlockEntities;
