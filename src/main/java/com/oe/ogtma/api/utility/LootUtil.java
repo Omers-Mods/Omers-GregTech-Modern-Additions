@@ -15,4 +15,9 @@ public class LootUtil {
     public static void getSilkTouchBlockDrops(NonNullList<ItemStack> blockDrops, BlockState blockState) {
         blockDrops.add(new ItemStack(blockState.getBlock()));
     }
+
+    public static void getSmallOreBlockDrops(NonNullList<ItemStack> blockDrops, BlockState blockState,
+                                             LootParams.Builder builder) {
+        // this is a noop :shrug:
+    }
 }

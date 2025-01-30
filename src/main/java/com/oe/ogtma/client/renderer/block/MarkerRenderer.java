@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.oe.ogtma.api.utility.LaserUtil;
-import com.oe.ogtma.common.blockentity.MarkerBlockEntity;
+import com.oe.ogtma.common.blockentity.marker.MarkerBlockEntity;
 import org.joml.Vector3f;
 
 import javax.annotation.ParametersAreNonnullByDefault;

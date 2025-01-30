@@ -34,4 +34,6 @@ public interface IQuarry {
     Level getLevel();
 
     BlockPos getPos();
+
+    int getVoltageTier();
 }

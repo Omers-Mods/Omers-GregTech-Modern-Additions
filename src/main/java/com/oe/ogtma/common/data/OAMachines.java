@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.function.BiFunction;
 
 import static com.gregtechceu.gtceu.api.GTValues.*;
-import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.DUMMY_RECIPES;
+import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.MACERATOR_RECIPES;
 import static com.oe.ogtma.OGTMA.REGISTRATE;
 import static com.oe.ogtma.OGTMA.id;
 
@@ -30,7 +30,7 @@ public class OAMachines {
             (tier, builder) -> builder
                     .rotationState(RotationState.NON_Y_AXIS)
                     .langValue("%s Quarry %s".formatted(VLVH[tier], VLVT[tier]))
-                    .recipeType(DUMMY_RECIPES)
+                    .recipeType(MACERATOR_RECIPES)
                     .editableUI(QuarryMachine.EDITABLE_UI_CREATOR.apply(OGTMA.id("quarry"), (tier + 1) * (tier + 1)))
                     .workableTieredHullRenderer(id("block/machines/quarry"))
                     .tooltipBuilder(((stack, tooltip) -> {

@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-import com.oe.ogtma.common.blockentity.MarkerBlockEntity;
+import com.oe.ogtma.common.blockentity.marker.MarkerBlockEntity;
 import com.oe.ogtma.common.data.OABlockEntities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

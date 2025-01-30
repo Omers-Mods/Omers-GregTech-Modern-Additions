@@ -3,7 +3,7 @@ package com.oe.ogtma.api.area;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.util.INBTSerializable;
 
-import com.oe.ogtma.common.blockentity.MarkerBlockEntity;
+import com.oe.ogtma.common.blockentity.marker.MarkerBlockEntity;
 import lombok.*;
 
 import java.util.Arrays;

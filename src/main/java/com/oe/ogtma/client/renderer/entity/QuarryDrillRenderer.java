@@ -18,7 +18,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.oe.ogtma.OGTMA;
@@ -50,27 +49,35 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
     public void render(QuarryDrillEntity drill, float yaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
         poseStack.pushPose();
-        var level = drill.level();
-        var gameTime = level.getGameTime();
-        var pos = drill.position();
-        var center = new Vector3f();
-        int color;
-        RenderSystem.setShaderColor(.376f, .96f, .98f, 1f);
-        for (var target : drill.getTargets()) {
-            center.set(target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f);
-            var state = level.getBlockState(target);
-            if (state.isAir()) {
-                continue;
+        if (drill.getDeltaMovement().length() < .25) {
+            var level = drill.level();
+            var gameTime = level.getGameTime();
+            var pos = drill.position();
+            var center = new Vector3f();
+            int color;
+            var quarryPos = drill.getQuarryPos();
+            for (var target : drill.getTargets()) {
+                if (target.equals(quarryPos)) {
+                    break;
+                }
+                if (target.getY() > pos.y - 1) {
+                    continue;
+                }
+                center.set(target.getX() + .5f, target.getY() + .5f, target.getZ() + .5f);
+                var state = level.getBlockState(target);
+                if (state.isAir()) {
+                    continue;
+                }
+                if (state.getBlock() instanceof MaterialBlock materialBlock) {
+                    color = materialBlock.material.getMaterialRGB();
+                } else {
+                    color = state.getMapColor(level, target).col;
+                }
+                LaserUtil.renderLaser(center.sub((float) pos.x, (float) pos.y, (float) pos.z), poseStack, bufferSource,
+                        ColorUtils.red(color), ColorUtils.green(color), ColorUtils.blue(color), 1, partialTick,
+                        gameTime);
             }
-            if (state.getBlock() instanceof MaterialBlock materialBlock) {
-                color = materialBlock.material.getMaterialRGB();
-            } else {
-                color = state.getMapColor(level, target).col;
-            }
-            LaserUtil.renderLaser(center.sub((float) pos.x, (float) pos.y, (float) pos.z), poseStack, bufferSource,
-                    ColorUtils.red(color), ColorUtils.green(color), ColorUtils.blue(color), 1, partialTick, gameTime);
         }
-        RenderSystem.setShaderColor(1, 1, 1, 1);
         var bb = drill.getBoundingBox();
         poseStack.mulPose(Axis.ZP.rotationDegrees(180));
         poseStack.translate(0, -3, 0);

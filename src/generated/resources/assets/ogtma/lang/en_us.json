@@ -4,6 +4,7 @@
   "block.ogtma.lv_quarry": "Basic Quarry §r",
   "block.ogtma.marker": "Marker",
   "block.ogtma.mv_quarry": "§bAdvanced Quarry §r",
+  "block.ogtma.quarry_pipe": "Quarry Pipe",
   "entity.ogtma.quarry_drill": "Quarry Drill",
   "ogtma.machine.quarry.tooltip": "§7Mines a marked area",
   "ogtma.machine.quarry.working_area_max": "§bThe max area is limited only by the marker range",

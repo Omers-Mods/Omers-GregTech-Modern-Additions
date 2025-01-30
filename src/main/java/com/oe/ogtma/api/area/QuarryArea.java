@@ -54,11 +54,11 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
 
         public iterator(QuarryArea area) {
             minX = area.getMinX();
-            minY = area.quarry.getQuarryStage() == QuarryMachine.QUARRYING ?
-                    area.quarry.getLevel().getMinBuildHeight() : area.getMinY();
+            var quarrying = area.quarry.getQuarryStage() == QuarryMachine.QUARRYING;
+            minY = quarrying ? area.quarry.getLevel().getMinBuildHeight() : area.getMinY();
             minZ = area.getMinZ();
             maxX = area.getMaxX();
-            y = maxY = area.getMaxY();
+            y = maxY = quarrying ? area.getMinY() : area.getMaxY();
             maxZ = area.getMaxZ();
             yPriority = area.quarry.getQuarryMode() == QuarryMode.VERTICAL;
             var pos = area.quarry.getPos();
@@ -71,10 +71,10 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
         public int nextX() {
             if (xPos) {
                 var p = x + 1;
-                return p >= maxX ? x : p;
+                return p > maxX ? x : p;
             } else {
                 var n = x - 1;
-                return n <= minX ? x : n;
+                return n < minX ? x : n;
             }
         }
 
@@ -86,10 +86,10 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
         public int nextZ() {
             if (zPos) {
                 var p = z + 1;
-                return p >= maxZ ? z : p;
+                return p > maxZ ? z : p;
             } else {
                 var n = z - 1;
-                return n <= minZ ? z : n;
+                return n < minZ ? z : n;
             }
         }
 

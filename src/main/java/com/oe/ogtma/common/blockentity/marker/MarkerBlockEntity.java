@@ -1,4 +1,4 @@
-package com.oe.ogtma.common.blockentity;
+package com.oe.ogtma.common.blockentity.marker;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -13,7 +13,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.common.block.marker.WallMarkerBlock;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +65,6 @@ public class MarkerBlockEntity extends BlockEntity {
         } else {
             positions[index] = pos;
         }
-        OGTMA.LOGGER.info("[{}] Setting {} to {}", pos.equals(selfPos) ? "Clear" : "Set", index, positions[index]);
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
             setChanged();
@@ -155,19 +153,15 @@ public class MarkerBlockEntity extends BlockEntity {
     }
 
     public void interact() {
-        OGTMA.LOGGER.info("Interacting");
         if (isEmpty()) {
-            OGTMA.LOGGER.info("Connecting...");
             connect();
         } else {
-            OGTMA.LOGGER.info("Disconnecting...");
             disconnect();
         }
     }
 
     @Override
     public void load(@NotNull CompoundTag tag) {
-        OGTMA.LOGGER.info("Loading marker data");
         super.load(tag);
         if (tag.contains(POSITIONS_TAG)) {
             var loaded = tag.getCompound(POSITIONS_TAG);

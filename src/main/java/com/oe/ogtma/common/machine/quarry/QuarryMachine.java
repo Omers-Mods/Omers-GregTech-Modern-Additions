@@ -49,10 +49,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import com.oe.ogtma.api.area.QuarryArea;
 import com.oe.ogtma.api.gui.configurator.EnumSelectorConfigurator;
+import com.oe.ogtma.common.blockentity.marker.MarkerBlockEntity;
+import com.oe.ogtma.common.data.OAEntities;
 import com.oe.ogtma.common.entity.quarry.QuarryDrillEntity;
 import com.oe.ogtma.common.machine.quarry.def.IQuarry;
 import com.oe.ogtma.common.machine.quarry.def.QuarryFluidMode;
@@ -79,14 +82,14 @@ public class QuarryMachine extends WorkableTieredMachine
     protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(QuarryMachine.class,
             WorkableTieredMachine.MANAGED_FIELD_HOLDER);
 
+    public static Direction[] HORIZONTAL = { Direction.NORTH, Direction.WEST, Direction.SOUTH, Direction.EAST };
     public static final int INITIAL = 0;
     public static final int CLEARING = 1;
     public static final int QUARRYING = 2;
 
     @Persisted
     @Getter
-    @Setter
-    protected int quarryStage = 0;
+    protected int quarryStage;
     @Persisted
     @DropSaved
     @Getter
@@ -110,7 +113,7 @@ public class QuarryMachine extends WorkableTieredMachine
     @Getter
     protected final CustomItemStackHandler chargerInventory;
     @Nullable
-    protected TickableSubscription autoOutputSubs, batterySubs;
+    protected TickableSubscription autoOutputSubs, batterySubs, formingSubs;
     @Nullable
     protected ISubscription exportItemSubs, exportFluidSubs, energySubs;
 
@@ -204,7 +207,6 @@ public class QuarryMachine extends WorkableTieredMachine
 
     @Override
     public void onMachineRemoved() {
-        getRecipeLogic().onRemove();
         clearInventory(exportItems.storage);
         clearInventory(chargerInventory);
     }
@@ -224,6 +226,7 @@ public class QuarryMachine extends WorkableTieredMachine
     public void onLoad() {
         super.onLoad();
         if (!isRemote()) {
+            setQuarryStage(quarryStage);
             if (getLevel() instanceof ServerLevel serverLevel) {
                 serverLevel.getServer().tell(new TickTask(0, this::updateAutoOutputSubscription));
             }
@@ -259,6 +262,73 @@ public class QuarryMachine extends WorkableTieredMachine
             drill.discard();
             drill = null;
         }
+    }
+
+    @Override
+    public int getVoltageTier() {
+        return tier;
+    }
+
+    protected void tryFormQuarry() {
+        if (!isRemote() && getOffsetTimer() % 10 == 0) {
+            for (var direction : HORIZONTAL) {
+                // if neighbor isn't a marker skip
+                if (!(getLevel().getBlockEntity(getPos().relative(direction)) instanceof MarkerBlockEntity marker)) {
+                    continue;
+                }
+                // if marker doesn't have the required connections skip
+                if (marker.isEmpty(Direction.Axis.X.ordinal()) || marker.isEmpty(Direction.Axis.Z.ordinal())) {
+                    continue;
+                }
+                // marker has the required connections form area
+                if (area == null) {
+                    area = new QuarryArea();
+                }
+                area.setQuarry(this);
+                area.setFromMarker(marker);
+                if (area.getYSize() < 5) {
+                    area.setMaxY(area.getMinY() + 5);
+                }
+                for (int i = 0; i < marker.getPositions().length; i++) {
+                    if (marker.isEmpty(i)) {
+                        continue;
+                    }
+                    var pos = marker.getPositions()[i];
+                    getLevel().setBlock(BlockPos.containing(pos.x, pos.y, pos.z), Blocks.AIR.defaultBlockState(),
+                            Block.UPDATE_ALL);
+                }
+                getLevel().setBlock(marker.getBlockPos(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                setQuarryStage(QUARRYING);
+            }
+        }
+    }
+
+    public void setQuarryStage(int stage) {
+        if (stage == INITIAL && (area == null || area.isEmpty())) {
+            if (!isRemote()) {
+                formingSubs = subscribeServerTick(formingSubs, this::tryFormQuarry);
+                if (drill != null) {
+                    drill.discard();
+                    drill = null;
+                }
+            }
+        }
+        if (stage != INITIAL) {
+            if (!isRemote()) {
+                if (formingSubs != null) {
+                    formingSubs.unsubscribe();
+                    formingSubs = null;
+                }
+                if (drill == null) {
+                    drill = OAEntities.QUARRY_DRILL.create(getLevel());
+                    getLevel().addFreshEntity(drill);
+                    drill.setPos(getPos().relative(Direction.UP, 2).getCenter());
+                    drill.setQuarryPos(getPos());
+                }
+                drill.setQuarryBox(area.getViewBox());
+            }
+        }
+        this.quarryStage = stage;
     }
 
     //////////////////////////////////////
@@ -411,8 +481,8 @@ public class QuarryMachine extends WorkableTieredMachine
     }
 
     protected void addDisplayText(@NotNull List<Component> textList) {
+        var pos = getRecipeLogic().getLast();
         if (area != null) {
-            var pos = getRecipeLogic().getLastMiningPos();
             if (pos != null) {
                 // todo: change to get values from iterator once machine is online
                 textList.add(Component.translatable("gtceu.machine.miner.startx", area.getMinX()).append(" ")
@@ -421,9 +491,10 @@ public class QuarryMachine extends WorkableTieredMachine
                         .append(Component.translatable("gtceu.machine.miner.miney", pos.getY())));
                 textList.add(Component.translatable("gtceu.machine.miner.startz", area.getMinZ()).append(" ")
                         .append(Component.translatable("gtceu.machine.miner.minez", pos.getZ())));
+                textList.add(
+                        Component.translatable("gtceu.universal.tooltip.working_area", area.getXSize(),
+                                area.getZSize()));
             }
-            textList.add(
-                    Component.translatable("gtceu.universal.tooltip.working_area", area.getXSize(), area.getZSize()));
         }
         if (getRecipeLogic().isDone())
             textList.add(Component.translatable("gtceu.multiblock.large_miner.done")
