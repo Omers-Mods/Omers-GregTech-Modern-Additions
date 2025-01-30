@@ -40,8 +40,13 @@ public class QuarryDrillEntity extends Entity {
             EntityDataSerializers.BLOCK_POS);
     protected static final EntityDataAccessor<BlockPos> MOVE_TARGET = SynchedEntityData
             .defineId(QuarryDrillEntity.class, EntityDataSerializers.BLOCK_POS);
+    protected static final EntityDataAccessor<Boolean> SHOULD_TARGET_AIR = SynchedEntityData
+            .defineId(QuarryDrillEntity.class, EntityDataSerializers.BOOLEAN);
+    protected static final EntityDataAccessor<Integer> TARGET_AIR_COLOR = SynchedEntityData
+            .defineId(QuarryDrillEntity.class, EntityDataSerializers.INT);
     protected static final EntityDataAccessor<AABB> CULL_BOX = SynchedEntityData.defineId(QuarryDrillEntity.class,
             OAEntityDataSerializers.AABB);
+    protected int noPhysicsTicks = 0;
 
     public QuarryDrillEntity(EntityType<? extends QuarryDrillEntity> entityType, Level level) {
         super(entityType, level);
@@ -54,6 +59,7 @@ public class QuarryDrillEntity extends Entity {
         moveTowardsTarget();
 
         move(MoverType.SELF, getDeltaMovement());
+        solveCollisions();
     }
 
     protected void moveTowardsTarget() {
@@ -67,6 +73,19 @@ public class QuarryDrillEntity extends Entity {
             } else {
                 setDeltaMovement(movementVector.normalize().scale(.5));
             }
+        }
+    }
+
+    protected void solveCollisions() {
+        if (this.noPhysicsTicks <= 0) {
+            if (this.horizontalCollision && this.verticalCollision) {
+                this.noPhysics = true;
+                this.noPhysicsTicks = 21;
+            } else {
+                this.noPhysics = false;
+            }
+        } else {
+            this.noPhysicsTicks--;
         }
     }
 
@@ -116,12 +135,30 @@ public class QuarryDrillEntity extends Entity {
         entityData.set(MOVE_TARGET, blockPos);
     }
 
+    public boolean shouldTargetAir() {
+        return entityData.get(SHOULD_TARGET_AIR);
+    }
+
+    public void setTargetAir(boolean targetAir) {
+        entityData.set(SHOULD_TARGET_AIR, targetAir);
+    }
+
+    public int getAirColor() {
+        return entityData.get(TARGET_AIR_COLOR);
+    }
+
+    public void setAirColor(int color) {
+        entityData.set(TARGET_AIR_COLOR, color);
+    }
+
     @Override
     protected void defineSynchedData() {
         entityData.define(ONLINE, false);
         entityData.define(TARGETS, NO_TARGET);
         entityData.define(QUARRY_POS, blockPosition());
         entityData.define(MOVE_TARGET, blockPosition());
+        entityData.define(SHOULD_TARGET_AIR, false);
+        entityData.define(TARGET_AIR_COLOR, 1);
         entityData.define(CULL_BOX, getDimensions(getPose()).makeBoundingBox(position()));
     }
 

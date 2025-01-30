@@ -1,8 +1,10 @@
 package com.oe.ogtma.api.area;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.common.util.INBTSerializable;
 
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
 import com.oe.ogtma.common.machine.quarry.def.IQuarry;
@@ -36,11 +38,11 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
 
     @NotNull
     @Override
-    public Iterator<BlockPos> iterator() {
-        return new iterator(this);
+    public QuarryAreaIterator iterator() {
+        return new QuarryAreaIterator(this);
     }
 
-    public static class iterator implements Iterator<BlockPos> {
+    public static class QuarryAreaIterator implements Iterator<BlockPos>, INBTSerializable<CompoundTag> {
 
         @Getter
         protected int minX, minY, minZ, maxX, maxY, maxZ;
@@ -51,21 +53,23 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
         @Getter
         @Setter
         protected boolean yPriority;
+        protected boolean first;
 
-        public iterator(QuarryArea area) {
-            minX = area.getMinX();
+        public QuarryAreaIterator(QuarryArea area) {
             var quarrying = area.quarry.getQuarryStage() == QuarryMachine.QUARRYING;
+            minX = area.getMinX() + (quarrying ? 1 : 0);
             minY = quarrying ? area.quarry.getLevel().getMinBuildHeight() : area.getMinY();
-            minZ = area.getMinZ();
-            maxX = area.getMaxX();
+            minZ = area.getMinZ() + (quarrying ? 1 : 0);
+            maxX = area.getMaxX() - (quarrying ? 1 : 0);
             y = maxY = quarrying ? area.getMinY() : area.getMaxY();
-            maxZ = area.getMaxZ();
+            maxZ = area.getMaxZ() - (quarrying ? 1 : 0);
             yPriority = area.quarry.getQuarryMode() == QuarryMode.VERTICAL;
             var pos = area.quarry.getPos();
             x = Mth.clamp(pos.getX(), minX, maxX);
             z = Mth.clamp(pos.getZ(), minZ, maxZ);
             xPos = x == minX;
             zPos = z == minZ;
+            first = true;
         }
 
         public int nextX() {
@@ -80,7 +84,7 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
 
         public int nextY() {
             var n = y - 1;
-            return n <= minY ? y : n;
+            return n < minY ? y : n;
         }
 
         public int nextZ() {
@@ -93,6 +97,20 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
             }
         }
 
+        public boolean isEdge(BlockPos pos) {
+            return isEdge(pos.getX(), pos.getY(), pos.getZ());
+        }
+
+        public boolean isEdge(int x, int y, int z) {
+            var isEdgeX = x == minX || x == maxX;
+            var isEdgeY = y == minY || y == maxY;
+            if (isEdgeX && isEdgeY) {
+                return true;
+            }
+            var isEdgeZ = z == minZ || z == maxZ;
+            return isEdgeZ && (isEdgeX || isEdgeY);
+        }
+
         // todo: make it chunk based (dig out a chunk then move to the next)
         @Override
         public boolean hasNext() {
@@ -101,7 +119,9 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
 
         @Override
         public BlockPos next() {
-            if (yPriority) {
+            if (first) {
+                first = false;
+            } else if (yPriority) {
                 var nextY = nextY();
                 if (nextY == y) {
                     y = maxY;
@@ -131,6 +151,41 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
                 }
             }
             return new BlockPos(x, y, z);
+        }
+
+        @Override
+        public CompoundTag serializeNBT() {
+            var tag = new CompoundTag();
+            tag.putIntArray("Values", new int[] { x, y, z, minX, minY, minZ, maxX, maxY, maxZ });
+            if (xPos) {
+                tag.putBoolean("XPos", true);
+            }
+            if (zPos) {
+                tag.putBoolean("ZPos", true);
+            }
+            if (yPriority) {
+                tag.putBoolean("YPriority", true);
+            }
+            return tag;
+        }
+
+        @Override
+        public void deserializeNBT(CompoundTag tag) {
+            var values = tag.getIntArray("Values");
+            if (values.length == 9) {
+                x = values[0];
+                y = values[1];
+                z = values[2];
+                minX = values[3];
+                minY = values[4];
+                minZ = values[5];
+                maxX = values[6];
+                maxY = values[7];
+                maxZ = values[8];
+                xPos = tag.getBoolean("XPos");
+                zPos = tag.getBoolean("ZPos");
+                yPriority = tag.getBoolean("YPriority");
+            }
         }
     }
 

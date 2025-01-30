@@ -20,6 +20,7 @@ import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
 import com.gregtechceu.gtceu.common.item.PortableScannerBehavior;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -48,6 +49,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -271,9 +273,10 @@ public class QuarryMachine extends WorkableTieredMachine
 
     protected void tryFormQuarry() {
         if (!isRemote() && getOffsetTimer() % 10 == 0) {
+            var pos = getPos();
             for (var direction : HORIZONTAL) {
                 // if neighbor isn't a marker skip
-                if (!(getLevel().getBlockEntity(getPos().relative(direction)) instanceof MarkerBlockEntity marker)) {
+                if (!(getLevel().getBlockEntity(pos.relative(direction)) instanceof MarkerBlockEntity marker)) {
                     continue;
                 }
                 // if marker doesn't have the required connections skip
@@ -286,19 +289,25 @@ public class QuarryMachine extends WorkableTieredMachine
                 }
                 area.setQuarry(this);
                 area.setFromMarker(marker);
+                if (Mth.clamp(pos.getX(), area.getMinX(), area.getMaxX()) == pos.getX() &&
+                        Mth.clamp(pos.getY(), area.getMinY(), area.getMaxY()) == pos.getY() &&
+                        Mth.clamp(pos.getZ(), area.getMinZ(), area.getMaxZ()) == pos.getZ()) {
+                    area = new QuarryArea(this);
+                    continue;
+                }
                 if (area.getYSize() < 5) {
-                    area.setMaxY(area.getMinY() + 5);
+                    area.setMaxY(area.getMinY() + 4);
                 }
                 for (int i = 0; i < marker.getPositions().length; i++) {
                     if (marker.isEmpty(i)) {
                         continue;
                     }
-                    var pos = marker.getPositions()[i];
-                    getLevel().setBlock(BlockPos.containing(pos.x, pos.y, pos.z), Blocks.AIR.defaultBlockState(),
-                            Block.UPDATE_ALL);
+                    var markerPos = marker.getPositions()[i];
+                    getLevel().setBlock(BlockPos.containing(markerPos.x, markerPos.y, markerPos.z),
+                            Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                 }
                 getLevel().setBlock(marker.getBlockPos(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-                setQuarryStage(QUARRYING);
+                setQuarryStage(CLEARING);
             }
         }
     }
@@ -324,6 +333,8 @@ public class QuarryMachine extends WorkableTieredMachine
                     getLevel().addFreshEntity(drill);
                     drill.setPos(getPos().relative(Direction.UP, 2).getCenter());
                     drill.setQuarryPos(getPos());
+                    drill.setTargetAir(stage == CLEARING);
+                    drill.setAirColor(GTMaterials.Copper.getMaterialRGB());
                 }
                 drill.setQuarryBox(area.getViewBox());
             }
@@ -484,7 +495,6 @@ public class QuarryMachine extends WorkableTieredMachine
         var pos = getRecipeLogic().getLast();
         if (area != null) {
             if (pos != null) {
-                // todo: change to get values from iterator once machine is online
                 textList.add(Component.translatable("gtceu.machine.miner.startx", area.getMinX()).append(" ")
                         .append(Component.translatable("gtceu.machine.miner.minex", pos.getX())));
                 textList.add(Component.translatable("gtceu.machine.miner.starty", area.getMaxY()).append(" ")

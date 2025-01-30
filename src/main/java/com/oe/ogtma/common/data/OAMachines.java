@@ -26,7 +26,7 @@ public class OAMachines {
 
     // todo: rework speed
     public static final MachineDefinition[] QUARRY = registerTieredMachines("quarry",
-            (holder, tier) -> new QuarryMachine(holder, tier, 320 / (tier * 2), Math.min(tier, 3)),
+            (holder, tier) -> new QuarryMachine(holder, tier, 240 / (tier * 2), Math.min(tier, 3)),
             (tier, builder) -> builder
                     .rotationState(RotationState.NON_Y_AXIS)
                     .langValue("%s Quarry %s".formatted(VLVH[tier], VLVT[tier]))

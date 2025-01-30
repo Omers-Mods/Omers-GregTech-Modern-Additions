@@ -1,6 +1,7 @@
 package com.oe.ogtma.api.area;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import com.oe.ogtma.common.blockentity.marker.MarkerBlockEntity;
@@ -23,9 +24,9 @@ public class Area implements INBTSerializable<CompoundTag> {
         minY = maxY = pos.getY();
         minZ = maxZ = pos.getZ();
         for (var v : marker.getPositions()) {
-            var x = (int) v.x;
-            var y = (int) v.y;
-            var z = (int) v.z;
+            var x = Mth.floor(v.x);
+            var y = Mth.floor(v.y);
+            var z = Mth.floor(v.z);
             if (x < minX) {
                 minX = x;
             } else if (maxX < x) {

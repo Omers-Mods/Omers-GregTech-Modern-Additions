@@ -15,7 +15,7 @@ public class OAEntities {
             .lang("Quarry Drill")
             .renderer(() -> QuarryDrillRenderer::new)
             .properties(builder -> builder
-                    .sized(2, 2)
+                    .sized(.5f, .5f)
                     .clientTrackingRange(10)
                     .updateInterval(5)
                     .setShouldReceiveVelocityUpdates(true)

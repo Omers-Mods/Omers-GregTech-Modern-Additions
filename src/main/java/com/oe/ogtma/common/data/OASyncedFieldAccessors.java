@@ -4,6 +4,7 @@ import net.minecraft.world.level.ChunkPos;
 
 import com.oe.ogtma.api.area.QuarryArea;
 import com.oe.ogtma.syncdata.ChunkPosPayload;
+import com.oe.ogtma.syncdata.QuarryAreaIteratorPayload;
 import com.oe.ogtma.syncdata.QuarryAreaPayload;
 
 import static com.lowdragmc.lowdraglib.syncdata.TypedPayloadRegistries.registerSimple;
@@ -13,5 +14,7 @@ public class OASyncedFieldAccessors {
     public static void init() {
         registerSimple(ChunkPosPayload.class, ChunkPosPayload::new, ChunkPos.class, 100);
         registerSimple(QuarryAreaPayload.class, QuarryAreaPayload::new, QuarryArea.class, 100);
+        registerSimple(QuarryAreaIteratorPayload.class, QuarryAreaIteratorPayload::new,
+                QuarryArea.QuarryAreaIterator.class, 100);
     }
 }
