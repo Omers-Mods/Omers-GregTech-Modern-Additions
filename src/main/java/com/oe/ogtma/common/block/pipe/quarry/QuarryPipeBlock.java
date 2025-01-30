@@ -6,7 +6,6 @@ import com.gregtechceu.gtceu.client.model.PipeModel;
 
 import com.lowdragmc.lowdraglib.client.renderer.IBlockRendererProvider;
 
-import com.oe.ogtma.common.blockentity.pipe.QuarryPipeBlockEntity;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,11 +15,12 @@ import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-
-import com.oe.ogtma.client.renderer.block.QuarryPipeRenderer;
-import com.oe.ogtma.common.data.OABlockEntities;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+
+import com.oe.ogtma.client.renderer.block.QuarryPipeRenderer;
+import com.oe.ogtma.common.blockentity.pipe.QuarryPipeBlockEntity;
+import com.oe.ogtma.common.data.OABlockEntities;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.ParametersAreNonnullByDefault;
