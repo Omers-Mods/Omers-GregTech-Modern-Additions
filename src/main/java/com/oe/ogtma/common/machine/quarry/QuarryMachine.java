@@ -279,8 +279,8 @@ public class QuarryMachine extends WorkableTieredMachine
         } else {
             if (drill == null) {
                 drill = OAEntities.QUARRY_DRILL.create(getLevel());
+                drill.setPos((double) (area.getMaxX() + area.getMinX()) / 2, area.getMaxY(), (double) (area.getMaxZ() + area.getMinZ()) / 2);
                 getLevel().addFreshEntity(drill);
-                drill.setPos(getRecipeLogic().getLast().above(3).getCenter());
             }
             drill.setQuarryPos(getPos());
             drill.setTargetAir(getQuarryStage() == CLEARING);
@@ -347,7 +347,6 @@ public class QuarryMachine extends WorkableTieredMachine
                     formingSubs.unsubscribe();
                     formingSubs = null;
                 }
-                getDrill();
             }
         }
         this.quarryStage = stage;

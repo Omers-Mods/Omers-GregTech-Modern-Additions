@@ -10,6 +10,7 @@ import net.minecraft.util.Mth;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -29,9 +30,8 @@ public class LaserUtil {
         // calculate rotation to point in ray direction
         var beamDirection = new Vector3f(0, 1, 0);
         var wantedNorm = ray.normalize(new Vector3f());
-        var rotAngle = (float) Math.acos(beamDirection.dot(wantedNorm));
-        var rotAxis = beamDirection.cross(wantedNorm).normalize();
-        poseStack.mulPose(Axis.of(rotAxis).rotation(rotAngle));
+        var axisAngle = MathUtils.getRotationAxisAndAngle(beamDirection, wantedNorm);
+        poseStack.mulPose(Axis.of(axisAngle.getLeft()).rotation(axisAngle.getRight()));
         // calculate beam length and self rotation
         var beamLength = ray.length();
         var step = Math.floorMod(gameTime, 40) + partialTick;

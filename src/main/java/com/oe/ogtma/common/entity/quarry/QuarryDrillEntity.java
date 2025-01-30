@@ -67,9 +67,13 @@ public class QuarryDrillEntity extends Entity {
         if (target.equals(getQuarryPos())) {
             setDeltaMovement(Vec3.ZERO);
         } else {
-            var movementVector = position().vectorTo(target.above(3).getCenter());
-            if (movementVector.length() < .25) {
-                setDeltaMovement(movementVector.scale(.5));
+            var movementVector = position().vectorTo(new Vec3(target.getX(), getY(), target.getZ()));
+            var bb = getBoundingBox();
+            if (bb.minY > target.getY() + 3) {
+                setBoundingBox(bb.setMinY(target.getY() + 3));
+            }
+            if (movementVector.length() < .5) {
+                setDeltaMovement(movementVector);
             } else {
                 setDeltaMovement(movementVector.normalize().scale(.5));
             }
@@ -78,7 +82,8 @@ public class QuarryDrillEntity extends Entity {
 
     protected void solveCollisions() {
         if (this.noPhysicsTicks <= 0) {
-            if (this.horizontalCollision && this.verticalCollision) {
+            if (!getQuarryBox().intersect(getBoundingBox()).equals(getBoundingBox()) ||
+                    (this.horizontalCollision && this.verticalCollision)) {
                 this.noPhysics = true;
                 this.noPhysicsTicks = 21;
             } else {
@@ -87,16 +92,6 @@ public class QuarryDrillEntity extends Entity {
         } else {
             this.noPhysicsTicks--;
         }
-    }
-
-    @Override
-    protected AABB makeBoundingBox() {
-        var aabb = super.makeBoundingBox();
-        var quarryBox = getQuarryBox();
-        if (!quarryBox.intersects(aabb)) {
-            setQuarryBox(quarryBox.move(position().subtract(quarryBox.getCenter())));
-        }
-        return aabb;
     }
 
     public BlockPos[] getTargets() {

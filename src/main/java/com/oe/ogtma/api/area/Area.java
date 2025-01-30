@@ -1,5 +1,6 @@
 package com.oe.ogtma.api.area;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraftforge.common.util.INBTSerializable;

@@ -1,16 +1,15 @@
 package com.oe.ogtma.common.block.pipe.quarry;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.block.AppearanceBlock;
 import com.gregtechceu.gtceu.client.model.PipeModel;
 
 import com.lowdragmc.lowdraglib.client.renderer.IBlockRendererProvider;
 
+import com.oe.ogtma.client.model.pipe.QuarryPipeModel;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -27,14 +26,14 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class QuarryPipeBlock extends AppearanceBlock implements IBlockRendererProvider, EntityBlock {
+public class QuarryPipeBlock extends Block implements IBlockRendererProvider, EntityBlock {
 
-    public final PipeModel model;
+    public final QuarryPipeModel model;
     public final QuarryPipeRenderer renderer;
 
     public QuarryPipeBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        this.model = new PipeModel(.75f, () -> GTCEu.id("block/pipe/pipe_side"),
+        this.model = new QuarryPipeModel(.75f, () -> GTCEu.id("block/pipe/pipe_side"),
                 () -> GTCEu.id("block/pipe/pipe_large_in"), null, null);
         this.renderer = new QuarryPipeRenderer(model);
     }
@@ -49,12 +48,6 @@ public class QuarryPipeBlock extends AppearanceBlock implements IBlockRendererPr
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return OABlockEntities.QUARRY_PIPE.create(pos, state);
-    }
-
-    @Override
-    public @Nullable BlockState getBlockAppearance(BlockState state, BlockAndTintGetter level, BlockPos pos,
-                                                   Direction side, BlockState sourceState, BlockPos sourcePos) {
-        return super.getBlockAppearance(state, level, pos, side, sourceState, sourcePos);
     }
 
     @SuppressWarnings("deprecation")

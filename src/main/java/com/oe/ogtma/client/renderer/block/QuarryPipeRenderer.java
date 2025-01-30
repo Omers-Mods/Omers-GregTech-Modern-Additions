@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import com.oe.ogtma.client.model.pipe.QuarryPipeModel;
 import com.oe.ogtma.common.blockentity.pipe.QuarryPipeBlockEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +27,9 @@ import java.util.List;
 
 public class QuarryPipeRenderer implements IRenderer {
 
-    protected PipeModel pipeModel;
+    protected QuarryPipeModel pipeModel;
 
-    public QuarryPipeRenderer(PipeModel pipeModel) {
+    public QuarryPipeRenderer(QuarryPipeModel pipeModel) {
         this.pipeModel = pipeModel;
         if (GTCEu.isClientSide()) {
             registerEvent();

@@ -36,7 +36,6 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import com.mojang.datafixers.util.Pair;
-import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.api.area.QuarryArea;
 import com.oe.ogtma.common.data.OABlocks;
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
@@ -155,7 +154,6 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
 
     @Override
     public void serverTick() {
-        // todo: implement quarry logic
         if (!isSuspend() && getMachine().getLevel() instanceof ServerLevel serverLevel && checkCanMine()) {
             // if the inventory is not full, drain energy etc. from the miner
             // the storages have already been checked earlier
@@ -219,10 +217,12 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
                         setStatus(Status.IDLE);
                     }
                 }
-                var drill = quarry.getDrill();
-                if (drill != null) {
-                    drill.setTargets(blocksToMine);
-                    drill.setMoveTarget(result.getFirst());
+                if (quarry.getQuarryStage() == QuarryMachine.QUARRYING) {
+                    var drill = quarry.getDrill();
+                    if (drill != null) {
+                        drill.setTargets(blocksToMine);
+                        drill.setMoveTarget(result.getFirst());
+                    }
                 }
             }
         } else {
@@ -262,11 +262,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
                 count++;
                 var state = level.getBlockState(pos);
                 if (skipBlock(pos, state)) {
-                    if (iterator.isEdge(pos)) {
-                        OGTMA.LOGGER.info("Skipping edge at {} block {}", pos, state.getBlock());
-                        OGTMA.LOGGER.info("Stage {}, ", quarry.getQuarryStage());
-                    }
-                    if (chances < blocksToMine.length && chances >= blocksToMine.length - i) {
+                    if (chances < blocksToMine.length * quarry.getVoltageTier() - 1) {
                         chances++;
                         i--;
                         continue;
