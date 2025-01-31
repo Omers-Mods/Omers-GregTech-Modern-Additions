@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 
 import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
+import com.oe.ogtma.config.OAConfig;
 
 import java.util.Locale;
 import java.util.function.BiFunction;
@@ -21,34 +22,45 @@ import static com.gregtechceu.gtceu.api.GTValues.*;
 import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.MACERATOR_RECIPES;
 import static com.oe.ogtma.OGTMA.REGISTRATE;
 import static com.oe.ogtma.OGTMA.id;
+import static com.oe.ogtma.api.utility.OAMachineUtils.*;
 
 public class OAMachines {
 
     // todo: rework speed
-    public static final MachineDefinition[] QUARRY = registerTieredMachines("quarry",
-            (holder, tier) -> new QuarryMachine(holder, tier, 240 / (tier * 2), Math.min(tier, 3)),
-            (tier, builder) -> builder
-                    .rotationState(RotationState.NON_Y_AXIS)
-                    .langValue("%s Quarry %s".formatted(VLVH[tier], VLVT[tier]))
-                    .recipeType(MACERATOR_RECIPES)
-                    .editableUI(QuarryMachine.EDITABLE_UI_CREATOR.apply(OGTMA.id("quarry"), (tier + 1) * (tier + 1)))
-                    .workableTieredHullRenderer(id("block/machines/quarry"))
-                    .tooltipBuilder(((stack, tooltip) -> {
-                        var euPerTick = V[tier - 1];
-                        var tickSpeed = 320 / (tier * 2);
-                        tooltip.add(Component.translatable("ogtma.machine.quarry.tooltip"));
-                        tooltip.add(Component.translatable("gtceu.universal.tooltip.uses_per_tick", euPerTick)
-                                .append(Component.literal(", ").withStyle(ChatFormatting.GRAY))
-                                .append(Component.translatable("gtceu.machine.miner.per_block", tickSpeed / 20)));
-                        tooltip.add(Component.translatable("gtceu.universal.tooltip.voltage_in",
-                                FormattingUtil.formatNumbers(GTValues.V[tier]),
-                                GTValues.VNF[tier]));
-                        tooltip.add(Component.translatable("gtceu.universal.tooltip.energy_storage_capacity",
-                                FormattingUtil.formatNumbers(GTValues.V[tier] * 64L)));
-                        tooltip.add(Component.translatable("ogtma.machine.quarry.working_area_max"));
-                    }))
-                    .register(),
-            tiersBetween(LV, EV));
+    public static final MachineDefinition[] QUARRY;
+    static {
+        if (OAConfig.INSTANCE.features.enableQuarry) {
+            QUARRY = registerTieredMachines("quarry", (holder, tier) -> new QuarryMachine(holder, tier,
+                    quarrySpeedScaling.applyAsInt(tier), blocksPerIterationScaling.applyAsInt(tier), Math.min(tier, 3)),
+                    (tier, builder) -> builder
+                            .rotationState(RotationState.NON_Y_AXIS)
+                            .langValue("%s Quarry %s".formatted(VLVH[tier], VLVT[tier]))
+                            .recipeType(MACERATOR_RECIPES)
+                            .editableUI(QuarryMachine.EDITABLE_UI_CREATOR.apply(OGTMA.id("quarry"),
+                                    inventorySizeScaling.applyAsInt(tier)))
+                            .workableTieredHullRenderer(id("block/machines/quarry"))
+                            .tooltipBuilder(((stack, tooltip) -> {
+                                var euPerTick = V[tier] / 2;
+                                var tickSpeed = quarrySpeedScaling.applyAsInt(tier);
+                                var perIteration = blocksPerIterationScaling.applyAsInt(tier);
+                                tooltip.add(Component.translatable("ogtma.machine.quarry.tooltip"));
+                                tooltip.add(Component.translatable("gtceu.universal.tooltip.uses_per_tick", euPerTick)
+                                        .append(Component.literal(", ").withStyle(ChatFormatting.GRAY))
+                                        .append(Component.translatable("ogtma.machine.quarry.per_blocks",
+                                                tickSpeed / 20, perIteration)));
+                                tooltip.add(Component.translatable("gtceu.universal.tooltip.voltage_in",
+                                        FormattingUtil.formatNumbers(GTValues.V[tier]),
+                                        GTValues.VNF[tier]));
+                                tooltip.add(Component.translatable("gtceu.universal.tooltip.energy_storage_capacity",
+                                        FormattingUtil.formatNumbers(GTValues.V[tier] * 64L)));
+                                tooltip.add(Component.translatable("ogtma.machine.quarry.working_area_max"));
+                            }))
+                            .register(),
+                    tiersBetween(LV, IV));
+        } else {
+            QUARRY = new MachineDefinition[0];
+        }
+    }
 
     public static void init() {}
 

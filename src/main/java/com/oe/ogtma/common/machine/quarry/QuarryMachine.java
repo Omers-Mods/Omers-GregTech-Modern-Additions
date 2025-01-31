@@ -144,10 +144,11 @@ public class QuarryMachine extends WorkableTieredMachine
     @Setter
     protected boolean allowInputFromOutputSideFluids;
 
-    public QuarryMachine(IMachineBlockEntity holder, int tier, int speed, int fortune, Object... args) {
+    public QuarryMachine(IMachineBlockEntity holder, int tier, int speed, int blocksPerIteration, int fortune,
+                         Object... args) {
         super(holder, tier, GTMachineUtils.defaultTankSizeFunction,
-                args, (tier + 1) * (tier + 1), Math.min(fortune, 3), speed);
-        this.euPerTick = GTValues.V[tier - 1];
+                args, blocksPerIteration, Math.min(fortune, 3), speed);
+        this.euPerTick = GTValues.V[tier] / 2;
         this.chargerInventory = createChargerItemHandler();
         this.outputFacingItems = hasFrontFacing() ? getFrontFacing().getOpposite() : Direction.UP;
         this.outputFacingFluids = outputFacingItems;
@@ -279,6 +280,7 @@ public class QuarryMachine extends WorkableTieredMachine
         } else {
             if (drill == null) {
                 drill = OAEntities.QUARRY_DRILL.create(getLevel());
+                drill.setTier(tier);
                 drill.setPos((double) (area.getMaxX() + area.getMinX()) / 2, area.getMaxY(),
                         (double) (area.getMaxZ() + area.getMinZ()) / 2);
                 getLevel().addFreshEntity(drill);

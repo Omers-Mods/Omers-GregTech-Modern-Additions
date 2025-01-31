@@ -11,6 +11,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import com.oe.ogtma.api.data.accessor.OAEntityDataSerializers;
 import com.oe.ogtma.common.data.*;
 import com.oe.ogtma.common.network.OANetwork;
+import com.oe.ogtma.config.OAConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,12 +33,12 @@ public class OGTMA {
     }
 
     private void init() {
+        OAConfig.init();
         OAEntityDataSerializers.init();
         OACreativeModeTabs.init();
         REGISTRATE.creativeModeTab(OACreativeModeTabs.GENERAL);
         OABlocks.init();
         OAItems.init();
-        OABlockEntities.init();
         OAEntities.init();
         OANetwork.init();
 
@@ -51,6 +52,8 @@ public class OGTMA {
     }
 
     private void registerMachines(final GTCEuAPI.RegisterEvent<ResourceLocation, MachineDefinition> event) {
+        OAMaterialBlocks.init();
+        OABlockEntities.init();
         OAMachines.init();
     }
 }

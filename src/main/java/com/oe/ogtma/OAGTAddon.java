@@ -6,16 +6,18 @@ import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 
 import net.minecraft.data.recipes.FinishedRecipe;
 
-import com.oe.ogtma.common.data.OARecipes;
+import com.oe.ogtma.common.data.*;
 
 import java.util.function.Consumer;
+
+import static com.oe.ogtma.OGTMA.REGISTRATE;
 
 @GTAddon
 public class OAGTAddon implements IGTAddon {
 
     @Override
     public GTRegistrate getRegistrate() {
-        return OGTMA.REGISTRATE;
+        return REGISTRATE;
     }
 
     @Override

@@ -15,7 +15,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -24,6 +23,7 @@ import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.api.utility.LaserUtil;
 import com.oe.ogtma.client.layers.OALayers;
 import com.oe.ogtma.client.model.entity.quarry.DrillModel;
+import com.oe.ogtma.common.data.OAMaterialBlocks;
 import com.oe.ogtma.common.entity.quarry.QuarryDrillEntity;
 import org.joml.Vector3f;
 
@@ -38,6 +38,7 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
     protected EntityModel<QuarryDrillEntity> model;
     protected BlockRenderDispatcher blockRenderer;
     protected float yOffset;
+    protected int tier;
 
     public QuarryDrillRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -48,6 +49,7 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
     @Override
     public void render(QuarryDrillEntity drill, float yaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
+        tier = drill.getTier();
         poseStack.pushPose();
         var moveTarget = drill.getMoveTarget().above(4).getCenter();
         var posDelta = drill.position().vectorTo(moveTarget);
@@ -85,7 +87,8 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
         poseStack.scale(.75f, 1, .75f);
         int i;
         for (i = 0; i < -(delta.y + .5); i++) {
-            blockRenderer.renderSingleBlock(Blocks.COPPER_BLOCK.defaultBlockState(), poseStack, bufferSource,
+            blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
+                    bufferSource,
                     packedLight, OverlayTexture.NO_OVERLAY);
             poseStack.translate(0, -1, 0);
             yOffset--;
@@ -105,14 +108,16 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
         poseStack.scale(1, .74f, .74f);
         int i;
         for (i = 0; i < drill.getQuarryBox().getXsize(); i++) {
-            blockRenderer.renderSingleBlock(Blocks.COPPER_BLOCK.defaultBlockState(), poseStack, bufferSource,
+            blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
+                    bufferSource,
                     packedLight, OverlayTexture.NO_OVERLAY);
             poseStack.translate(1, 0, 0);
         }
         var leftOver = drill.getQuarryBox().getXsize() - i;
         if (leftOver > .2) {
             poseStack.scale((float) leftOver, 1, 1);
-            blockRenderer.renderSingleBlock(Blocks.COPPER_BLOCK.defaultBlockState(), poseStack, bufferSource,
+            blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
+                    bufferSource,
                     packedLight, OverlayTexture.NO_OVERLAY);
         }
 
@@ -129,14 +134,16 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
         poseStack.scale(.74f, .74f, 1);
         int i;
         for (i = 0; i < drill.getQuarryBox().getZsize(); i++) {
-            blockRenderer.renderSingleBlock(Blocks.COPPER_BLOCK.defaultBlockState(), poseStack, bufferSource,
+            blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
+                    bufferSource,
                     packedLight, OverlayTexture.NO_OVERLAY);
             poseStack.translate(0, 0, 1);
         }
         var leftOver = drill.getQuarryBox().getZsize() - i;
         if (leftOver > .2) {
             poseStack.scale(1, 1, (float) leftOver);
-            blockRenderer.renderSingleBlock(Blocks.COPPER_BLOCK.defaultBlockState(), poseStack, bufferSource,
+            blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
+                    bufferSource,
                     packedLight, OverlayTexture.NO_OVERLAY);
         }
 
@@ -148,7 +155,8 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
         var level = drill.level();
         var gameTime = level.getGameTime();
         var selfPos = drill.position();
-        var pos = new Vec3(Mth.lerp(partialTick, drill.xOld, selfPos.x), Mth.lerp(partialTick, drill.yOld, selfPos.y) + yOffset, Mth.lerp(partialTick, drill.zOld, selfPos.z));
+        var pos = new Vec3(Mth.lerp(partialTick, drill.xOld, selfPos.x),
+                Mth.lerp(partialTick, drill.yOld, selfPos.y) + yOffset, Mth.lerp(partialTick, drill.zOld, selfPos.z));
         var center = new Vector3f();
         int color;
         var quarryPos = drill.getQuarryPos();

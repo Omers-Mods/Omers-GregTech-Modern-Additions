@@ -37,7 +37,7 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import com.mojang.datafixers.util.Pair;
 import com.oe.ogtma.api.area.QuarryArea;
-import com.oe.ogtma.common.data.OABlocks;
+import com.oe.ogtma.common.data.OAMaterialBlocks;
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
 import com.oe.ogtma.common.machine.quarry.def.IQuarry;
 import lombok.Getter;
@@ -353,7 +353,9 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         if (quarry.getQuarryStage() == QuarryMachine.CLEARING) {
             var iterator = getAreaIterator();
             if (iterator != null && iterator.isEdge(pos)) {
-                quarry.getLevel().setBlock(pos, OABlocks.QUARRY_PIPE_BLOCK.getDefaultState(), Block.UPDATE_ALL);
+                quarry.getLevel().setBlock(pos,
+                        OAMaterialBlocks.QUARRY_PIPE_BLOCKS[quarry.getVoltageTier()].getDefaultState(),
+                        Block.UPDATE_ALL);
             } else {
                 quarry.getLevel().setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             }

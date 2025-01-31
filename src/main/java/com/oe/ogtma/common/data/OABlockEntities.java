@@ -17,7 +17,7 @@ public class OABlockEntities {
 
     public static final BlockEntityEntry<QuarryPipeBlockEntity> QUARRY_PIPE = REGISTRATE
             .blockEntity("quarry_pipe", QuarryPipeBlockEntity::new)
-            .validBlock(OABlocks.QUARRY_PIPE_BLOCK)
+            .validBlocks(OAMaterialBlocks.QUARRY_PIPE_BLOCKS)
             .register();
 
     public static void init() {}

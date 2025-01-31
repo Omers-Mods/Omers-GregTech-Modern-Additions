@@ -19,9 +19,6 @@ import net.minecraftforge.network.NetworkHooks;
 
 import com.oe.ogtma.api.data.accessor.OAEntityDataSerializers;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -29,9 +26,10 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @MethodsReturnNonnullByDefault
 public class QuarryDrillEntity extends Entity {
 
-    public static final Set<QuarryDrillEntity> DRILLS = new HashSet<>();
     public static final BlockPos[] NO_TARGET = new BlockPos[0];
 
+    protected static final EntityDataAccessor<Integer> TIER = SynchedEntityData.defineId(QuarryDrillEntity.class,
+            EntityDataSerializers.INT);
     protected static final EntityDataAccessor<Boolean> ONLINE = SynchedEntityData.defineId(QuarryDrillEntity.class,
             EntityDataSerializers.BOOLEAN);
     protected static final EntityDataAccessor<BlockPos[]> TARGETS = SynchedEntityData.defineId(QuarryDrillEntity.class,
@@ -50,7 +48,6 @@ public class QuarryDrillEntity extends Entity {
 
     public QuarryDrillEntity(EntityType<? extends QuarryDrillEntity> entityType, Level level) {
         super(entityType, level);
-        DRILLS.add(this);
         noCulling = true;
     }
 
@@ -92,6 +89,14 @@ public class QuarryDrillEntity extends Entity {
         } else {
             this.noPhysicsTicks--;
         }
+    }
+
+    public int getTier() {
+        return entityData.get(TIER);
+    }
+
+    public void setTier(int tier) {
+        entityData.set(TIER, tier);
     }
 
     public BlockPos[] getTargets() {
@@ -148,6 +153,7 @@ public class QuarryDrillEntity extends Entity {
 
     @Override
     protected void defineSynchedData() {
+        entityData.define(TIER, 0);
         entityData.define(ONLINE, false);
         entityData.define(TARGETS, NO_TARGET);
         entityData.define(QUARRY_POS, blockPosition());
@@ -170,18 +176,6 @@ public class QuarryDrillEntity extends Entity {
     @Override
     public boolean shouldRenderAtSqrDistance(double pDistance) {
         return true;
-    }
-
-    @Override
-    public void remove(RemovalReason pReason) {
-        DRILLS.remove(this);
-        super.remove(pReason);
-    }
-
-    @Override
-    public void onClientRemoval() {
-        DRILLS.remove(this);
-        super.onClientRemoval();
     }
 
     @Override

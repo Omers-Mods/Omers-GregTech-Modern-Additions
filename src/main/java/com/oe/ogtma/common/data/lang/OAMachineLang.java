@@ -8,5 +8,6 @@ public class OAMachineLang {
         // quarry
         provider.add("ogtma.machine.quarry.tooltip", "§7Mines a marked area");
         provider.add("ogtma.machine.quarry.working_area_max", "§bThe max area is limited only by the marker range");
+        provider.add("ogtma.machine.quarry.per_blocks", "§7takes §f%ds §7per §f%d §7Blocks");
     }
 }

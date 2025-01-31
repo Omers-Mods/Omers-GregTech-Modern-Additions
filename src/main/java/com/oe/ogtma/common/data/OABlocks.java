@@ -1,7 +1,5 @@
 package com.oe.ogtma.common.data;
 
-import com.gregtechceu.gtceu.common.data.GTMaterials;
-
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.StandingAndWallBlockItem;
@@ -11,18 +9,17 @@ import net.minecraftforge.client.model.generators.ConfiguredModel;
 
 import com.oe.ogtma.common.block.marker.MarkerBlock;
 import com.oe.ogtma.common.block.marker.WallMarkerBlock;
-import com.oe.ogtma.common.block.pipe.quarry.QuarryPipeBlock;
 import com.tterrag.registrate.providers.ProviderType;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
 
 import static com.oe.ogtma.OGTMA.REGISTRATE;
 
-@SuppressWarnings("ALL")
+@SuppressWarnings("removal")
 public class OABlocks {
 
     public static final BlockEntry<MarkerBlock> MARKER = REGISTRATE
-            .block("marker", properties -> new MarkerBlock(properties))
+            .block("marker", MarkerBlock::new)
             .initialProperties(() -> Blocks.TORCH)
             .lang("Marker")
             .addLayer(() -> RenderType::cutout)
@@ -37,7 +34,7 @@ public class OABlocks {
             .register();
 
     public static final BlockEntry<WallMarkerBlock> WALL_MARKER = REGISTRATE
-            .block("wall_marker", properties -> new WallMarkerBlock(properties))
+            .block("wall_marker", WallMarkerBlock::new)
             .initialProperties(() -> Blocks.WALL_TORCH)
             .lang("Wall Marker")
             .addLayer(() -> RenderType::cutout)
@@ -52,9 +49,6 @@ public class OABlocks {
                                 case WEST -> 180;
                                 default -> 0;
                             };
-                            if (facing == Direction.NORTH) {
-                                yRot = 270;
-                            }
                             return ConfiguredModel.builder()
                                     .modelFile(model)
                                     .rotationY(yRot)
@@ -63,17 +57,6 @@ public class OABlocks {
             })
             .loot((table, block) -> table.dropOther(block, MARKER.asItem()))
             .setData(ProviderType.LANG, NonNullBiConsumer.noop())
-            .register();
-
-    public static final BlockEntry<QuarryPipeBlock> QUARRY_PIPE_BLOCK = REGISTRATE
-            .block("quarry_pipe", QuarryPipeBlock::new)
-            .lang("Quarry Pipe")
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p.dynamicShape().noOcclusion().noLootTable().forceSolidOn())
-            .blockstate(NonNullBiConsumer.noop())
-            .setData(ProviderType.LOOT, NonNullBiConsumer.noop())
-            .addLayer(() -> RenderType::cutoutMipped)
-            .color(() -> () -> (blockState, level, blockPos, index) -> GTMaterials.Copper.getMaterialRGB())
             .register();
 
     public static void init() {}
