@@ -62,7 +62,7 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
             poseStack.translate(0, posDelta.y, 0);
         }
         renderDrill(drill, poseStack, bufferSource, packedLight);
-        if (drill.getDeltaMovement().length() < .5 || drill.shouldTargetAir()) {
+        if (drill.getDeltaMovement().length() < 1 || drill.shouldTargetAir()) {
             handleLasers(drill, partialTick, poseStack, bufferSource);
         }
         poseStack.popPose();
@@ -147,7 +147,8 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
                                 MultiBufferSource bufferSource) {
         var level = drill.level();
         var gameTime = level.getGameTime();
-        var pos = drill.position().add(0, yOffset, 0);
+        var selfPos = drill.position();
+        var pos = new Vec3(Mth.lerp(partialTick, drill.xOld, selfPos.x), Mth.lerp(partialTick, drill.yOld, selfPos.y) + yOffset, Mth.lerp(partialTick, drill.zOld, selfPos.z));
         var center = new Vector3f();
         int color;
         var quarryPos = drill.getQuarryPos();
