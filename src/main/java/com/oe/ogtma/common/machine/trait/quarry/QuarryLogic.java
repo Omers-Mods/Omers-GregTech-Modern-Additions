@@ -37,6 +37,7 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import com.mojang.datafixers.util.Pair;
 import com.oe.ogtma.api.area.QuarryArea;
+import com.oe.ogtma.api.utility.OAMachineUtils;
 import com.oe.ogtma.common.data.OAMaterialBlocks;
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
 import com.oe.ogtma.common.machine.quarry.def.IQuarry;
@@ -94,7 +95,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     public QuarryLogic(IRecipeLogicMachine machine, int speed, int fortune, Object... args) {
         super(machine);
         this.quarry = (IQuarry) machine;
-        var temp = new BlockPos[quarry.getVoltageTier() * quarry.getVoltageTier()];
+        var temp = new BlockPos[OAMachineUtils.blocksPerIterationScaling.applyAsInt(quarry.getVoltageTier())];
         Arrays.fill(temp, quarry.getPos());
         this.blocksToMine = temp;
         this.capabilitiesProxy = Tables.newCustomTable(new EnumMap<>(IO.class), IdentityHashMap::new);
@@ -262,7 +263,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
                 count++;
                 var state = level.getBlockState(pos);
                 if (skipBlock(pos, state)) {
-                    if (chances < blocksToMine.length * quarry.getVoltageTier() - 1) {
+                    if (chances < blocksToMine.length * quarry.getVoltageTier()) {
                         chances++;
                         i--;
                         continue;

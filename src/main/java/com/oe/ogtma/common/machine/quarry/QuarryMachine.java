@@ -56,6 +56,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import com.oe.ogtma.api.area.QuarryArea;
 import com.oe.ogtma.api.gui.configurator.EnumSelectorConfigurator;
+import com.oe.ogtma.api.utility.OAMachineUtils;
 import com.oe.ogtma.common.blockentity.marker.MarkerBlockEntity;
 import com.oe.ogtma.common.data.OAEntities;
 import com.oe.ogtma.common.entity.quarry.QuarryDrillEntity;
@@ -144,11 +145,11 @@ public class QuarryMachine extends WorkableTieredMachine
     @Setter
     protected boolean allowInputFromOutputSideFluids;
 
-    public QuarryMachine(IMachineBlockEntity holder, int tier, int speed, int blocksPerIteration, int fortune,
+    public QuarryMachine(IMachineBlockEntity holder, int tier, int speed, int fortune,
                          Object... args) {
         super(holder, tier, GTMachineUtils.defaultTankSizeFunction,
-                args, blocksPerIteration, Math.min(fortune, 3), speed);
-        this.euPerTick = GTValues.V[tier] / 2;
+                args, OAMachineUtils.inventorySizeScaling.applyAsInt(tier), Math.min(fortune, 3), speed);
+        this.euPerTick = GTValues.V[tier] / 4;
         this.chargerInventory = createChargerItemHandler();
         this.outputFacingItems = hasFrontFacing() ? getFrontFacing().getOpposite() : Direction.UP;
         this.outputFacingFluids = outputFacingItems;

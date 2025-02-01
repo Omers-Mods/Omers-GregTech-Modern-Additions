@@ -31,7 +31,7 @@ public class OAMachines {
     static {
         if (OAConfig.INSTANCE.features.enableQuarry) {
             QUARRY = registerTieredMachines("quarry", (holder, tier) -> new QuarryMachine(holder, tier,
-                    quarrySpeedScaling.applyAsInt(tier), blocksPerIterationScaling.applyAsInt(tier), Math.min(tier, 3)),
+                    quarrySpeedScaling.applyAsInt(tier), Math.min(tier, 3)),
                     (tier, builder) -> builder
                             .rotationState(RotationState.NON_Y_AXIS)
                             .langValue("%s Quarry %s".formatted(VLVH[tier], VLVT[tier]))
