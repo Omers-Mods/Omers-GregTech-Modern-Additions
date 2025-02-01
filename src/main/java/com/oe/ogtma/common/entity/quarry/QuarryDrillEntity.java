@@ -8,9 +8,8 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MoverType;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -42,7 +41,7 @@ public class QuarryDrillEntity extends Entity {
             .defineId(QuarryDrillEntity.class, EntityDataSerializers.BOOLEAN);
     protected static final EntityDataAccessor<Integer> TARGET_AIR_COLOR = SynchedEntityData
             .defineId(QuarryDrillEntity.class, EntityDataSerializers.INT);
-    protected static final EntityDataAccessor<AABB> CULL_BOX = SynchedEntityData.defineId(QuarryDrillEntity.class,
+    protected static final EntityDataAccessor<AABB> QUARRY_BOX = SynchedEntityData.defineId(QuarryDrillEntity.class,
             OAEntityDataSerializers.AABB);
     protected int noPhysicsTicks = 0;
 
@@ -59,21 +58,23 @@ public class QuarryDrillEntity extends Entity {
         solveCollisions();
     }
 
+    @Override
+    public boolean canBeCollidedWith() {
+        // todo: fix collision
+        return true;
+    }
+
     protected void moveTowardsTarget() {
         var target = getMoveTarget();
         if (target.equals(getQuarryPos())) {
             setDeltaMovement(Vec3.ZERO);
         } else {
-            var movementVector = position().vectorTo(new Vec3(target.getX(), getY(), target.getZ()));
+            var movementVector = new Vec3(target.getX() + .5 - getX(), 0, target.getZ() + .5 - getZ());
             var bb = getBoundingBox();
             if (bb.minY > target.getY() + 3) {
                 setBoundingBox(bb.setMinY(target.getY() + 3));
             }
-            if (movementVector.length() < .5) {
-                setDeltaMovement(movementVector);
-            } else {
-                setDeltaMovement(movementVector.normalize().scale(.5));
-            }
+            setDeltaMovement(movementVector.scale(.08));
         }
     }
 
@@ -111,11 +112,11 @@ public class QuarryDrillEntity extends Entity {
     }
 
     public AABB getQuarryBox() {
-        return entityData.get(CULL_BOX);
+        return entityData.get(QUARRY_BOX);
     }
 
     public void setQuarryBox(AABB quarryBox) {
-        entityData.set(CULL_BOX, quarryBox);
+        entityData.set(QUARRY_BOX, quarryBox);
     }
 
     public BlockPos getQuarryPos() {
@@ -160,7 +161,7 @@ public class QuarryDrillEntity extends Entity {
         entityData.define(MOVE_TARGET, blockPosition());
         entityData.define(SHOULD_TARGET_AIR, false);
         entityData.define(TARGET_AIR_COLOR, 1);
-        entityData.define(CULL_BOX, getDimensions(getPose()).makeBoundingBox(position()));
+        entityData.define(QUARRY_BOX, getDimensions(getPose()).makeBoundingBox(position()));
     }
 
     @Override
@@ -188,4 +189,18 @@ public class QuarryDrillEntity extends Entity {
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {}
+
+    @Override
+    public boolean canChangeDimensions() {
+        return false;
+    }
+
+    @Override
+    public boolean isPickable() {
+        return true;
+    }
+
+    public SoundSource getSoundSource() {
+        return SoundSource.BLOCKS;
+    }
 }

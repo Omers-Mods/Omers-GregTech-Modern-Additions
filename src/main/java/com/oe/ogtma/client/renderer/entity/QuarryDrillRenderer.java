@@ -29,6 +29,7 @@ import org.joml.Vector3f;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+@SuppressWarnings("deprecation")
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
@@ -50,19 +51,19 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
     public void render(QuarryDrillEntity drill, float yaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
         tier = drill.getTier();
+        var target = drill.getMoveTarget();
+        var pos = drill.position();
+        var posDelta = new Vec3(target.getX() - pos.x, target.getY() + 3 - pos.y, target.getZ() - pos.z);
+        if (posDelta.y >= 0) {
+            return;
+        }
         poseStack.pushPose();
-        var moveTarget = drill.getMoveTarget().above(4).getCenter();
-        var posDelta = drill.position().vectorTo(moveTarget);
         packedLight = LightTexture.pack(Math.max(LightTexture.block(packedLight), 3), LightTexture.sky(packedLight));
         poseStack.translate(0, .5, 0);
         yOffset = .5f;
-        if (posDelta.y < 0) {
-            renderPipesX(drill, poseStack, bufferSource, packedLight, partialTick);
-            renderPipesZ(drill, poseStack, bufferSource, packedLight, partialTick);
-            renderPipesY(poseStack, bufferSource, packedLight, posDelta);
-        } else {
-            poseStack.translate(0, posDelta.y, 0);
-        }
+        renderPipesX(drill, poseStack, bufferSource, packedLight, partialTick);
+        renderPipesZ(drill, poseStack, bufferSource, packedLight, partialTick);
+        renderPipesY(poseStack, bufferSource, packedLight, posDelta);
         renderDrill(drill, poseStack, bufferSource, packedLight);
         if (drill.getDeltaMovement().length() < 1 || drill.shouldTargetAir()) {
             handleLasers(drill, partialTick, poseStack, bufferSource);
@@ -82,20 +83,19 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
     }
 
     protected void renderPipesY(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, Vec3 delta) {
-        poseStack.translate(-.375, -.5, -.375);
+        poseStack.translate(-.4, -.5, -.4);
         yOffset -= .5f;
-        poseStack.scale(.75f, 1, .75f);
+        poseStack.scale(.8f, 1, .8f);
         int i;
         for (i = 0; i < -(delta.y + .5); i++) {
             blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
-                    bufferSource,
-                    packedLight, OverlayTexture.NO_OVERLAY);
+                    bufferSource, packedLight, OverlayTexture.NO_OVERLAY);
             poseStack.translate(0, -1, 0);
             yOffset--;
         }
 
-        poseStack.scale(4f / 3f, 1, 4f / 3f);
-        poseStack.translate(.375, 0, .375);
+        poseStack.scale(1.25f, 1, 1.25f);
+        poseStack.translate(.4, 0, .4);
     }
 
     protected void renderPipesX(QuarryDrillEntity drill, PoseStack poseStack, MultiBufferSource bufferSource,
@@ -104,21 +104,19 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
 
         // do stuff like placing blocks and shit
         var pX = drill.getQuarryBox().minX - Mth.lerp(partialTick, drill.xOld, drill.getX());
-        poseStack.translate(pX + .5, -.375, -.375);
-        poseStack.scale(1, .74f, .74f);
+        poseStack.translate(pX + .5, -.35, -.35);
+        poseStack.scale(1, .7f, .7f);
         int i;
         for (i = 0; i < drill.getQuarryBox().getXsize(); i++) {
             blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
-                    bufferSource,
-                    packedLight, OverlayTexture.NO_OVERLAY);
+                    bufferSource, packedLight, OverlayTexture.NO_OVERLAY);
             poseStack.translate(1, 0, 0);
         }
         var leftOver = drill.getQuarryBox().getXsize() - i;
         if (leftOver > .2) {
             poseStack.scale((float) leftOver, 1, 1);
             blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
-                    bufferSource,
-                    packedLight, OverlayTexture.NO_OVERLAY);
+                    bufferSource, packedLight, OverlayTexture.NO_OVERLAY);
         }
 
         poseStack.popPose();
@@ -130,21 +128,19 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
 
         // do stuff like placing blocks and shit
         var pZ = drill.getQuarryBox().minZ - Mth.lerp(partialTick, drill.zOld, drill.getZ());
-        poseStack.translate(-.375, -.375, pZ + .5);
-        poseStack.scale(.74f, .74f, 1);
+        poseStack.translate(-.35, -.35, pZ + .5);
+        poseStack.scale(.7f, .7f, 1);
         int i;
         for (i = 0; i < drill.getQuarryBox().getZsize(); i++) {
             blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
-                    bufferSource,
-                    packedLight, OverlayTexture.NO_OVERLAY);
+                    bufferSource, packedLight, OverlayTexture.NO_OVERLAY);
             poseStack.translate(0, 0, 1);
         }
         var leftOver = drill.getQuarryBox().getZsize() - i;
         if (leftOver > .2) {
             poseStack.scale(1, 1, (float) leftOver);
             blockRenderer.renderSingleBlock(OAMaterialBlocks.QUARRY_BLOCKS[tier].getDefaultState(), poseStack,
-                    bufferSource,
-                    packedLight, OverlayTexture.NO_OVERLAY);
+                    bufferSource, packedLight, OverlayTexture.NO_OVERLAY);
         }
 
         poseStack.popPose();
@@ -164,7 +160,7 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
             if (target.equals(quarryPos)) {
                 break;
             }
-            center.set(target.getX() + .5f, target.getY() + .9f, target.getZ() + .5f);
+            double x = target.getX() + .5, y = target.getY() + .9, z = target.getZ() + .5;
             var state = level.getBlockState(target);
             var isAir = state.isAir();
             if (isAir && !drill.shouldTargetAir()) {
@@ -177,7 +173,7 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
             } else {
                 color = drill.getAirColor();
             }
-            LaserUtil.renderLaser(center.sub((float) pos.x, (float) pos.y, (float) pos.z), poseStack, bufferSource,
+            LaserUtil.renderLaser(center.set(x - pos.x, y - pos.y, z - pos.z), poseStack, bufferSource,
                     ColorUtils.red(color), ColorUtils.green(color), ColorUtils.blue(color), 1, partialTick,
                     gameTime);
         }
