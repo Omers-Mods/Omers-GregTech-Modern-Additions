@@ -61,23 +61,23 @@ public class LaserUtil {
                 minU, maxU, minV, maxV);
     }
 
-    public static void renderQuad(Matrix4f pPose, Matrix3f pNormal, VertexConsumer pConsumer, float pRed, float pGreen,
-                                  float pBlue, float pAlpha, float pMinY, float pMaxY, float pMinX, float pMinZ,
-                                  float pMaxX, float pMaxZ, float pMinU, float pMaxU, float pMinV, float pMaxV) {
-        addVertex(pPose, pNormal, pConsumer, pRed, pGreen, pBlue, pAlpha, pMaxY, pMinX, pMinZ, pMaxU, pMinV);
-        addVertex(pPose, pNormal, pConsumer, pRed, pGreen, pBlue, pAlpha, pMinY, pMinX, pMinZ, pMaxU, pMaxV);
-        addVertex(pPose, pNormal, pConsumer, pRed, pGreen, pBlue, pAlpha, pMinY, pMaxX, pMaxZ, pMinU, pMaxV);
-        addVertex(pPose, pNormal, pConsumer, pRed, pGreen, pBlue, pAlpha, pMaxY, pMaxX, pMaxZ, pMinU, pMinV);
+    public static void renderQuad(Matrix4f pose, Matrix3f normal, VertexConsumer consumer, float red, float green,
+                                  float blue, float alpha, float minY, float maxY, float minX, float minZ,
+                                  float maxX, float maxZ, float minU, float maxU, float minV, float maxV) {
+        addVertex(pose, normal, consumer, red, green, blue, alpha, maxY, minX, minZ, maxU, minV);
+        addVertex(pose, normal, consumer, red, green, blue, alpha, minY, minX, minZ, maxU, maxV);
+        addVertex(pose, normal, consumer, red, green, blue, alpha, minY, maxX, maxZ, minU, maxV);
+        addVertex(pose, normal, consumer, red, green, blue, alpha, maxY, maxX, maxZ, minU, minV);
     }
 
-    public static void addVertex(Matrix4f pPose, Matrix3f pNormal, VertexConsumer pConsumer, float pRed, float pGreen,
-                                 float pBlue, float pAlpha, float pY, float pX, float pZ, float pU, float pV) {
-        pConsumer.vertex(pPose, pX, pY, pZ)
-                .color(pRed, pGreen, pBlue, pAlpha)
-                .uv(pU, pV)
+    public static void addVertex(Matrix4f pose, Matrix3f normal, VertexConsumer consumer, float red, float green,
+                                 float blue, float alpha, float y, float x, float z, float u, float v) {
+        consumer.vertex(pose, x, y, z)
+                .color(red, green, blue, alpha)
+                .uv(u, v)
                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                 .uv2(15728880)
-                .normal(pNormal, 0.0F, 1.0F, 0.0F)
+                .normal(normal, 0.0F, 1.0F, 0.0F)
                 .endVertex();
     }
 }
