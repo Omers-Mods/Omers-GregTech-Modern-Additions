@@ -51,7 +51,6 @@ import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import com.oe.ogtma.api.area.QuarryArea;
@@ -303,7 +302,7 @@ public class QuarryMachine extends WorkableTieredMachine
                     continue;
                 }
                 // if marker doesn't have the required connections skip
-                if (marker.isEmpty(Direction.Axis.X.ordinal()) || marker.isEmpty(Direction.Axis.Z.ordinal())) {
+                if (!marker.hasConnections(Direction.Axis.X, Direction.Axis.Z)) {
                     continue;
                 }
                 // marker has the required connections form area
@@ -311,25 +310,15 @@ public class QuarryMachine extends WorkableTieredMachine
                     area = new QuarryArea();
                 }
                 area.setQuarry(this);
-                area.setFromMarker(marker);
+                area.setFromMarker(marker, Direction.Axis.X, Direction.Axis.Z);
                 if (Mth.clamp(pos.getX(), area.getMinX(), area.getMaxX()) == pos.getX() &&
                         Mth.clamp(pos.getY(), area.getMinY(), area.getMaxY()) == pos.getY() &&
                         Mth.clamp(pos.getZ(), area.getMinZ(), area.getMaxZ()) == pos.getZ()) {
                     area = new QuarryArea(this);
                     continue;
                 }
-                if (area.getYSize() < 5) {
-                    area.setMaxY(area.getMinY() + 4);
-                }
-                for (int i = 0; i < marker.getPositions().length; i++) {
-                    if (marker.isEmpty(i)) {
-                        continue;
-                    }
-                    var markerPos = marker.getPositions()[i];
-                    getLevel().setBlock(BlockPos.containing(markerPos.x, markerPos.y, markerPos.z),
-                            Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-                }
-                getLevel().setBlock(marker.getBlockPos(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                area.setMaxY(area.getMinY() + 4);
+                marker.destroy(Direction.Axis.X, Direction.Axis.Z);
                 setQuarryStage(CLEARING);
             }
         }

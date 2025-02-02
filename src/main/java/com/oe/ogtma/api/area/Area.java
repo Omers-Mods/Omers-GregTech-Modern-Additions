@@ -1,7 +1,7 @@
 package com.oe.ogtma.api.area;
 
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.Mth;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import com.oe.ogtma.common.blockentity.marker.MarkerBlockEntity;
@@ -18,31 +18,14 @@ public class Area implements INBTSerializable<CompoundTag> {
 
     protected int minX, maxX, minY, maxY, minZ, maxZ;
 
-    public void setFromMarker(MarkerBlockEntity marker) {
-        var pos = marker.getBlockPos();
-        minX = maxX = pos.getX();
-        minY = maxY = pos.getY();
-        minZ = maxZ = pos.getZ();
-        for (var v : marker.getPositions()) {
-            var x = Mth.floor(v.x);
-            var y = Mth.floor(v.y);
-            var z = Mth.floor(v.z);
-            if (x < minX) {
-                minX = x;
-            } else if (maxX < x) {
-                maxX = x;
-            }
-            if (y < minY) {
-                minY = y;
-            } else if (maxY < y) {
-                maxY = y;
-            }
-            if (z < minZ) {
-                minZ = z;
-            } else if (maxZ < z) {
-                maxZ = z;
-            }
-        }
+    public void setFromMarker(MarkerBlockEntity marker, Direction.Axis... directions) {
+        var coords = marker.getArea(directions);
+        minX = coords[0];
+        minY = coords[1];
+        minZ = coords[2];
+        maxX = coords[3];
+        maxY = coords[4];
+        maxZ = coords[5];
     }
 
     public boolean isEmpty() {

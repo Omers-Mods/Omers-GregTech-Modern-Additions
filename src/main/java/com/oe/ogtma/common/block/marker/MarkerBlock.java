@@ -25,8 +25,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 public class MarkerBlock extends TorchBlock implements EntityBlock {
 
-    private long counter;
-
     public MarkerBlock(Properties pProperties) {
         super(pProperties, null);
     }
@@ -53,9 +51,6 @@ public class MarkerBlock extends TorchBlock implements EntityBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                   BlockEntityType<T> blockEntityType) {
-        if (level.isClientSide || counter++ % 10 != 0) {
-            return null;
-        }
         return (l, p, s, be) -> ((MarkerBlockEntity) be).updateConnections();
     }
 
