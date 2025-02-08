@@ -14,6 +14,7 @@ import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
+import com.lowdragmc.lowdraglib.syncdata.annotation.DropSaved;
 import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
@@ -90,6 +91,12 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     @Persisted
     @Getter
     protected BlockPos last;
+    @Persisted
+    @DropSaved
+    @Getter
+    @Setter
+    protected long storedXP;
+    // todo: implement xp from mining (1 per ore or smth)
     @Persisted
     @Getter
     protected Set<ChunkPos> loadedChunks;
