@@ -16,7 +16,11 @@ public class LootUtil {
     }
 
     public static boolean isFluid(BlockState state) {
-        return !state.getFluidState().isEmpty() && state.getFluidState().isSource();
+        return !state.getFluidState().isEmpty();
+    }
+
+    public static boolean isFluidSource(BlockState state) {
+        return state.getFluidState().isSource();
     }
 
     public static void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, BlockState blockState,
