@@ -62,13 +62,13 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
             return;
         }
         poseStack.pushPose();
-        packedLight = LightTexture.pack(Math.max(LightTexture.block(packedLight), 1), LightTexture.sky(packedLight));
         poseStack.translate(0, .5, 0);
         yOffset = .5f;
         renderPipesX(drill, poseStack, bufferSource, packedLight, partialTick);
         renderPipesZ(drill, poseStack, bufferSource, packedLight, partialTick);
         renderPipesY(poseStack, bufferSource, packedLight, posDelta);
-        renderDrill(drill, poseStack, bufferSource, packedLight);
+        renderDrill(drill, poseStack, bufferSource,
+                LightTexture.pack(Math.max(LightTexture.block(packedLight), 3), LightTexture.sky(packedLight)));
         if (drill.getDeltaMovement().length() < 1 || drill.shouldTargetAir()) {
             handleLasers(drill, partialTick, poseStack, bufferSource);
         }
