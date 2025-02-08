@@ -78,6 +78,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     protected final BlockPos[] blocksToMine;
     @Persisted
     @Getter
+    @Setter
     protected boolean done;
     @Getter
     protected boolean inventoryFull;
@@ -297,7 +298,8 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         var quarry = getMachine();
         return pos.equals(quarry.getPos()) || switch (quarry.getQuarryStage()) {
             case QuarryMachine.CLEARING -> blockState.isAir() && (areaIterator == null || !areaIterator.isEdge(pos));
-            case QuarryMachine.QUARRYING -> blockState.isAir();
+            case QuarryMachine.QUARRYING -> blockState.isAir() ||
+                    (LootUtil.isFluid(blockState) && !LootUtil.isFluidSource(blockState));
             default -> true;
         } || (!blockState.isAir() && blockState.getDestroySpeed(quarry.getLevel(), pos) < 0);
     }
@@ -340,12 +342,12 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         return !done && getMachine().drainInput(true) && getMachine().getQuarryStage() != QuarryMachine.INITIAL;
     }
 
-    public void resetArea(boolean checkToMine) {
+    public void resetArea(boolean clearIterator) {
         if (isDone()) {
             setWorkingEnabled(false);
         }
         done = false;
-        if (checkToMine) {
+        if (clearIterator) {
             areaIterator = null;
         }
     }

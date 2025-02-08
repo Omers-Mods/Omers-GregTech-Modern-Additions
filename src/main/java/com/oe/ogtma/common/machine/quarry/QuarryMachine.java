@@ -285,7 +285,6 @@ public class QuarryMachine extends WorkableTieredMachine
         } else {
             if (area == null) {
                 setWorkingEnabled(false);
-                getRecipeLogic().setWorkingEnabled(false);
                 return null;
             }
             area.setFromQuarry(this);
@@ -335,7 +334,6 @@ public class QuarryMachine extends WorkableTieredMachine
                 setArea(area);
                 setQuarryStage(CLEARING);
                 setWorkingEnabled(true);
-                getRecipeLogic().setWorkingEnabled(true);
             }
         }
     }
@@ -350,6 +348,14 @@ public class QuarryMachine extends WorkableTieredMachine
             }
         }
         this.quarryStage = stage;
+    }
+
+    @Override
+    public void setWorkingEnabled(boolean isWorkingAllowed) {
+        super.setWorkingEnabled(isWorkingAllowed);
+        if (getRecipeLogic().isDone() && isWorkingAllowed) {
+            getRecipeLogic().resetArea(true);
+        }
     }
 
     //////////////////////////////////////
