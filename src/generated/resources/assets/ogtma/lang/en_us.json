@@ -25,7 +25,7 @@
   "ogtma.machine.quarry.working_area_max": "§bThe max area is limited only by the marker range",
   "ogtma.option.quarry_fluid_mode": "Fluid Mode",
   "ogtma.option.quarry_fluid_mode.collect": "Collect",
-  "ogtma.option.quarry_fluid_mode.stop": "Stop",
+  "ogtma.option.quarry_fluid_mode.ignore": "Ignore",
   "ogtma.option.quarry_fluid_mode.void": "Void Excess",
   "ogtma.option.quarry_mode": "Quarry Mode",
   "ogtma.option.quarry_mode.horizontal": "Horizontal",

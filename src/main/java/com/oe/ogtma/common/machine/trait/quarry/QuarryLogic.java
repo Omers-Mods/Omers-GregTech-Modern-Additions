@@ -11,8 +11,7 @@ import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
 import com.gregtechceu.gtceu.api.transfer.item.NotifiableAccountedInvWrapper;
 import com.gregtechceu.gtceu.common.data.GTMaterialItems;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
-import com.gregtechceu.gtceu.utils.GTTransferUtils;
-import com.gregtechceu.gtceu.utils.GTUtil;
+import com.gregtechceu.gtceu.utils.*;
 
 import com.lowdragmc.lowdraglib.syncdata.annotation.DropSaved;
 import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
@@ -42,6 +41,7 @@ import com.oe.ogtma.api.utility.LootUtil;
 import com.oe.ogtma.api.utility.OAMachineUtils;
 import com.oe.ogtma.common.data.OAMaterialBlocks;
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
+import com.oe.ogtma.common.machine.quarry.def.QuarryFluidMode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -204,33 +204,39 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
                     if (skipBlock(pos, blockState)) {
                         continue;
                     }
-                    var blockDrops = NonNullList.<ItemStack>create();
 
-                    // When we are here we have a block to mine! I'm glad we aren't threaded
-                    var builder = new LootParams.Builder(serverLevel)
-                            .withParameter(LootContextParams.BLOCK_STATE, blockState)
-                            .withParameter(LootContextParams.ORIGIN, Vec3.atLowerCornerOf(pos))
-                            .withParameter(LootContextParams.TOOL, getPickaxeTool());
-
-                    // get the small ore drops, if a small ore
-                    getSmallOreBlockDrops(blockDrops, blockState, builder);
-                    // get the block's drops.
-                    if (isSilkTouchMode()) {
-                        getSilkTouchBlockDrops(blockDrops, blockState);
-                    } else {
-                        getRegularBlockDrops(blockDrops, blockState, builder);
-                    }
-                    // handle recipe type
-                    if (hasPostProcessing(blockState, blockDrops)) {
-                        doPostProcessing(blockDrops, blockState, builder);
-                    }
                     // handle fluids
                     if (LootUtil.isFluid(blockState)) {
+                        if (quarry.getQuarryFluidMode() == QuarryFluidMode.IGNORE) {
+                            inventoryFull = false;
+                            continue;
+                        }
                         var fluidOutput = getFluidBlockDrops(blockState);
-                        insertFluids(fluidOutput);
+                        pumpAndInsertFluids(fluidOutput, pos);
+                    } else {
+                        var blockDrops = NonNullList.<ItemStack>create();
+
+                        // When we are here we have a block to mine! I'm glad we aren't threaded
+                        var builder = new LootParams.Builder(serverLevel)
+                                .withParameter(LootContextParams.BLOCK_STATE, blockState)
+                                .withParameter(LootContextParams.ORIGIN, Vec3.atLowerCornerOf(pos))
+                                .withParameter(LootContextParams.TOOL, getPickaxeTool());
+
+                        // get the small ore drops, if a small ore
+                        getSmallOreBlockDrops(blockDrops, blockState, builder);
+                        // get the block's drops.
+                        if (isSilkTouchMode()) {
+                            getSilkTouchBlockDrops(blockDrops, blockState);
+                        } else {
+                            getRegularBlockDrops(blockDrops, blockState, builder);
+                        }
+                        // handle recipe type
+                        if (hasPostProcessing(blockState, blockDrops)) {
+                            doPostProcessing(blockDrops, blockState, builder);
+                        }
+                        // try to insert them
+                        mineAndInsertItems(blockDrops, pos);
                     }
-                    // try to insert them
-                    mineAndInsertItems(blockDrops, pos);
                 }
                 // get the blocks to mine the next iteration and tell the drill entity
                 if (inventoryFull) {
@@ -246,6 +252,8 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
                     } else if (quarry.getQuarryStage() == QuarryMachine.QUARRYING) {
                         done = true;
                         setStatus(Status.IDLE);
+                        loadedChunks.forEach(pos -> quarry.unloadChunk(pos.x, pos.z));
+                        loadedChunks.clear();
                     }
                 }
                 if (quarry.getQuarryStage() == QuarryMachine.QUARRYING) {
@@ -273,6 +281,9 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         var chunksToLoad = new HashSet<ChunkPos>();
         chunksToLoad.add(drillPos);
         for (var target : targets) {
+            if (target.equals(quarry.getPos())) {
+                continue;
+            }
             chunksToLoad.add(new ChunkPos(target.getX() >> 4, target.getZ() >> 4));
         }
         loadedChunks.stream().filter(pos -> !chunksToLoad.contains(pos))
@@ -397,12 +408,43 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     }
 
     @SuppressWarnings("unchecked")
-    protected void insertFluids(FluidIngredient fluidOutput) {
+    protected void pumpAndInsertFluids(FluidIngredient fluidOutput, BlockPos pos) {
+        var quarry = getMachine();
+        switch (quarry.getQuarryFluidMode()) {
+            case COLLECT -> {
+                var copy = fluidOutput.copy();
+                var remaining = List.of(copy);
+                for (var handler : getCachedFluidHandlers()) {
+                    remaining = (List<FluidIngredient>) handler.handleRecipe(IO.OUT, null, remaining, null, true);
+                    if (remaining == null) {
+                        inventoryFull = false;
+                        break;
+                    }
+                }
+                if (remaining != null) {
+                    inventoryFull = true;
+                    return;
+                }
+            }
+            case VOID, IGNORE -> inventoryFull = false;
+        }
         var remaining = List.of(fluidOutput);
         for (var handler : getCachedFluidHandlers()) {
             remaining = (List<FluidIngredient>) handler.handleRecipe(IO.OUT, null, remaining, null, false);
             if (remaining == null) {
                 break;
+            }
+        }
+        if (quarry.getQuarryStage() == QuarryMachine.QUARRYING) {
+            quarry.getLevel().setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        } else if (quarry.getQuarryStage() == QuarryMachine.CLEARING) {
+            var iterator = getAreaIterator();
+            if (iterator != null && iterator.isEdge(pos)) {
+                quarry.getLevel().setBlock(pos,
+                        OAMaterialBlocks.QUARRY_PIPE_BLOCKS[quarry.getVoltageTier()].getDefaultState(),
+                        Block.UPDATE_ALL);
+            } else {
+                quarry.getLevel().setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             }
         }
     }

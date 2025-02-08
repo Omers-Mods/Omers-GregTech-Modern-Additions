@@ -77,7 +77,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -106,7 +105,7 @@ public class QuarryMachine extends WorkableTieredMachine
     @DropSaved
     @Getter
     @Setter
-    protected QuarryFluidMode quarryFluidMode = QuarryFluidMode.COLLECT;
+    protected QuarryFluidMode quarryFluidMode = QuarryFluidMode.IGNORE;
     @Nullable
     @Persisted
     @Getter
@@ -695,20 +694,23 @@ public class QuarryMachine extends WorkableTieredMachine
                                 area.getZSize()));
             }
         }
-        if (getRecipeLogic().isDone())
+        if (getRecipeLogic().isDone()) {
             textList.add(Component.translatable("gtceu.multiblock.large_miner.done")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)));
-        else if (getRecipeLogic().isWorking())
+        } else if (getRecipeLogic().isWorking()) {
             textList.add(Component.translatable("gtceu.multiblock.large_miner.working")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)));
-        else if (!this.isWorkingEnabled())
+        } else if (!this.isWorkingEnabled()) {
             textList.add(Component.translatable("gtceu.multiblock.work_paused"));
-        if (getRecipeLogic().isInventoryFull())
+        }
+        if (getRecipeLogic().isInventoryFull()) {
             textList.add(Component.translatable("gtceu.multiblock.large_miner.invfull")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
-        if (!drainInput(true))
+        }
+        if (!drainInput(true)) {
             textList.add(Component.translatable("gtceu.multiblock.large_miner.needspower")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
+        }
     }
 
     @Override
@@ -733,7 +735,7 @@ public class QuarryMachine extends WorkableTieredMachine
             return Collections.singletonList(
                     Component.translatable("gtceu.universal.tooltip.working_area", area.getXSize(), area.getZSize()));
         }
-        return new ArrayList<>();
+        return List.of();
     }
 
     //////////////////////////////////////
