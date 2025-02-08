@@ -25,6 +25,7 @@ import com.oe.ogtma.client.layers.OALayers;
 import com.oe.ogtma.client.model.entity.quarry.DrillModel;
 import com.oe.ogtma.common.data.OAMaterialBlocks;
 import com.oe.ogtma.common.entity.quarry.QuarryDrillEntity;
+import com.oe.ogtma.config.OAConfig;
 import org.joml.Vector3f;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -50,6 +51,9 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
     @Override
     public void render(QuarryDrillEntity drill, float yaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
+        if (!OAConfig.INSTANCE.quarry.renderQuarryDrill) {
+            return;
+        }
         tier = drill.getTier();
         var target = drill.getMoveTarget();
         var pos = drill.position();
@@ -58,7 +62,7 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
             return;
         }
         poseStack.pushPose();
-        packedLight = LightTexture.pack(Math.max(LightTexture.block(packedLight), 3), LightTexture.sky(packedLight));
+        packedLight = LightTexture.pack(Math.max(LightTexture.block(packedLight), 1), LightTexture.sky(packedLight));
         poseStack.translate(0, .5, 0);
         yOffset = .5f;
         renderPipesX(drill, poseStack, bufferSource, packedLight, partialTick);

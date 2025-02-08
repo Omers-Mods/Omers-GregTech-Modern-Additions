@@ -2,6 +2,7 @@ package com.oe.ogtma.config;
 
 import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.config.category.FeatureConfigs;
+import com.oe.ogtma.config.category.QuarryConfigs;
 import dev.toma.configuration.Configuration;
 import dev.toma.configuration.config.Config;
 import dev.toma.configuration.config.Configurable;
@@ -23,4 +24,6 @@ public class OAConfig {
 
     @Configurable
     public FeatureConfigs features = new FeatureConfigs();
+    @Configurable
+    public QuarryConfigs quarry = new QuarryConfigs();
 }
