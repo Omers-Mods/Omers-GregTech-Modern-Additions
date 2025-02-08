@@ -11,8 +11,8 @@ import lombok.Getter;
 @Getter
 public enum QuarryFluidMode implements EnumSelectorWidget.SelectableEnum {
 
+    IGNORE,
     COLLECT,
-    STOP,
     VOID;
 
     private static final String lang = "ogtma.option.quarry_fluid_mode.";

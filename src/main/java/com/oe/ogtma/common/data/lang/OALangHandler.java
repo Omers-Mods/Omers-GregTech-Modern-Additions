@@ -15,8 +15,8 @@ public class OALangHandler {
 
         // QuarryFluidMode tooltips
         provider.add("ogtma.option.quarry_fluid_mode", "Fluid Mode");
+        provider.add("ogtma.option.quarry_fluid_mode.ignore", "Ignore");
         provider.add("ogtma.option.quarry_fluid_mode.collect", "Collect");
-        provider.add("ogtma.option.quarry_fluid_mode.stop", "Stop");
         provider.add("ogtma.option.quarry_fluid_mode.void", "Void Excess");
     }
 }
