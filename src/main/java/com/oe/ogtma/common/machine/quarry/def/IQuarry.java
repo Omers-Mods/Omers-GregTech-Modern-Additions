@@ -1,7 +1,5 @@
 package com.oe.ogtma.common.machine.quarry.def;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import com.oe.ogtma.api.area.QuarryArea;
@@ -12,10 +10,6 @@ public interface IQuarry {
     int getQuarryStage();
 
     void setQuarryStage(int stage);
-
-    QuarryMode getQuarryMode();
-
-    void setQuarryMode(QuarryMode mode);
 
     QuarryFluidMode getQuarryFluidMode();
 
@@ -29,9 +23,9 @@ public interface IQuarry {
 
     QuarryDrillEntity getDrill();
 
-    Level getLevel();
-
-    BlockPos getPos();
-
     int getVoltageTier();
+
+    void loadChunk(int x, int z);
+
+    void unloadChunk(int x, int z);
 }

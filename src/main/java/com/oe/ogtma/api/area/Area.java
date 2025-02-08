@@ -1,5 +1,7 @@
 package com.oe.ogtma.api.area;
 
+import com.lowdragmc.lowdraglib.syncdata.ITagSerializable;
+
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.util.INBTSerializable;
@@ -12,7 +14,7 @@ import java.util.Arrays;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class Area implements INBTSerializable<CompoundTag> {
+public class Area implements INBTSerializable<CompoundTag>, ITagSerializable<CompoundTag> {
 
     private static final String AREA_TAG = "Area";
 

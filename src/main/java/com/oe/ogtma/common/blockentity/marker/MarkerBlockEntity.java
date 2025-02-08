@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -17,7 +18,6 @@ import net.minecraft.world.phys.Vec3;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.common.block.marker.WallMarkerBlock;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
@@ -125,12 +125,12 @@ public class MarkerBlockEntity extends BlockEntity {
             if (v.equals(selfPos)) {
                 continue;
             }
-            x0 = Math.min(x0, (int) v.x);
-            y0 = Math.min(y0, (int) v.y);
-            z0 = Math.min(z0, (int) v.z);
-            x1 = Math.max(x1, (int) v.x);
-            y1 = Math.max(y1, (int) v.y);
-            z1 = Math.max(z1, (int) v.z);
+            x0 = Math.min(x0, Mth.floor(v.x));
+            y0 = Math.min(y0, Mth.floor(v.y));
+            z0 = Math.min(z0, Mth.floor(v.z));
+            x1 = Math.max(x1, Mth.floor(v.x));
+            y1 = Math.max(y1, Mth.floor(v.y));
+            z1 = Math.max(z1, Mth.floor(v.z));
         }
         return new int[] { x0, y0, z0, x1, y1, z1 };
     }
@@ -139,16 +139,12 @@ public class MarkerBlockEntity extends BlockEntity {
         if (level == null || level.isClientSide || level.getGameTime() % 10 != 0) {
             return;
         }
-        OGTMA.LOGGER.info("Updating connections...");
         for (int i = 0; i < positions.length; i++) {
-            OGTMA.LOGGER.info("Connection axis {}", Direction.Axis.values()[i]);
             if (isEmpty(i)) {
-                OGTMA.LOGGER.info("Is empty");
                 continue;
             }
             var pos = positions[i];
             if (!(level.getBlockEntity(BlockPos.containing(pos.x, pos.y, pos.z)) instanceof MarkerBlockEntity)) {
-                OGTMA.LOGGER.info("Isn't a marker anymore");
                 set(i);
             }
         }

@@ -10,6 +10,7 @@ import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
 import com.gregtechceu.gtceu.api.gui.editor.EditableUI;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
+import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.WorkableTieredMachine;
@@ -20,7 +21,6 @@ import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
-import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
 import com.gregtechceu.gtceu.common.item.PortableScannerBehavior;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -31,10 +31,7 @@ import com.lowdragmc.lowdraglib.gui.widget.ComponentPanelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.DraggableScrollableWidgetGroup;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.syncdata.ISubscription;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DropSaved;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.annotation.RequireRerender;
+import com.lowdragmc.lowdraglib.syncdata.annotation.*;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 import com.lowdragmc.lowdraglib.utils.Position;
 
@@ -43,25 +40,38 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraftforge.common.SoundActions;
+import net.minecraftforge.common.world.ForgeChunkManager;
+import net.minecraftforge.fluids.FluidActionResult;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 
+import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.api.area.QuarryArea;
 import com.oe.ogtma.api.gui.configurator.EnumSelectorConfigurator;
 import com.oe.ogtma.api.utility.OAMachineUtils;
 import com.oe.ogtma.common.blockentity.marker.MarkerBlockEntity;
 import com.oe.ogtma.common.data.OAEntities;
+import com.oe.ogtma.common.data.OAMaterialBlocks;
 import com.oe.ogtma.common.entity.quarry.QuarryDrillEntity;
 import com.oe.ogtma.common.machine.quarry.def.IQuarry;
 import com.oe.ogtma.common.machine.quarry.def.QuarryFluidMode;
-import com.oe.ogtma.common.machine.quarry.def.QuarryMode;
 import com.oe.ogtma.common.machine.trait.quarry.QuarryLogic;
 import lombok.Getter;
 import lombok.Setter;
@@ -80,11 +90,11 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class QuarryMachine extends WorkableTieredMachine
                            implements IQuarry, IControllable, IFancyUIMachine, IDataInfoProvider, IAutoOutputBoth {
 
-    protected static final int NUM_ARGS = 3;
+    protected static final int NUM_ARGS = 4;
     protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(QuarryMachine.class,
             WorkableTieredMachine.MANAGED_FIELD_HOLDER);
 
-    public static Direction[] HORIZONTAL = { Direction.NORTH, Direction.WEST, Direction.SOUTH, Direction.EAST };
+    public static final Direction[] HORIZONTAL = { Direction.NORTH, Direction.WEST, Direction.SOUTH, Direction.EAST };
     public static final int INITIAL = 0;
     public static final int CLEARING = 1;
     public static final int QUARRYING = 2;
@@ -92,11 +102,6 @@ public class QuarryMachine extends WorkableTieredMachine
     @Persisted
     @Getter
     protected int quarryStage;
-    @Persisted
-    @DropSaved
-    @Getter
-    @Setter
-    protected QuarryMode quarryMode = QuarryMode.HORIZONTAL;
     @Persisted
     @DropSaved
     @Getter
@@ -146,8 +151,9 @@ public class QuarryMachine extends WorkableTieredMachine
 
     public QuarryMachine(IMachineBlockEntity holder, int tier, int speed, int fortune,
                          Object... args) {
-        super(holder, tier, GTMachineUtils.defaultTankSizeFunction,
-                args, OAMachineUtils.inventorySizeScaling.applyAsInt(tier), Math.min(fortune, 3), speed);
+        super(holder, tier, GTMachineUtils.defaultTankSizeFunction, args,
+                OAMachineUtils.tankNumberScaling.applyAsInt(tier), OAMachineUtils.inventorySizeScaling.applyAsInt(tier),
+                Math.min(fortune, 3), speed);
         this.euPerTick = GTValues.V[tier] / 4;
         this.chargerInventory = createChargerItemHandler();
         this.outputFacingItems = hasFrontFacing() ? getFrontFacing().getOpposite() : Direction.UP;
@@ -170,7 +176,7 @@ public class QuarryMachine extends WorkableTieredMachine
             return new QuarryLogic(this, speed, fortune);
         }
         throw new IllegalArgumentException(
-                "QuarryMachine needs args [inventorySize, fortune, speed] for initialization");
+                "QuarryMachine needs args [tankCount, inventorySize, fortune, speed] for initialization");
     }
 
     protected CustomItemStackHandler createChargerItemHandler(Object... args) {
@@ -193,12 +199,17 @@ public class QuarryMachine extends WorkableTieredMachine
             return new NotifiableItemStackHandler(this, invSize, IO.OUT, IO.BOTH);
         }
         throw new IllegalArgumentException(
-                "QuarryMachine needs args [inventorySize, fortune, speed] for initialization");
+                "QuarryMachine needs args [tankCount, inventorySize, fortune, speed] for initialization");
     }
 
     @Override
     protected NotifiableFluidTank createExportFluidHandler(Object... args) {
-        return new NotifiableFluidTank(this, tier, tankScalingFunction.apply(tier), IO.OUT);
+        var len = args.length;
+        if (len >= NUM_ARGS && args[len - 4] instanceof Integer tankCount) {
+            return new NotifiableFluidTank(this, tankCount, tankScalingFunction.apply(tier), IO.OUT);
+        }
+        throw new IllegalArgumentException(
+                "QuarryMachine needs args [tankCount, inventorySize, fortune, speed] for initialization");
     }
 
     @Override
@@ -227,16 +238,11 @@ public class QuarryMachine extends WorkableTieredMachine
     public void onLoad() {
         super.onLoad();
         if (!isRemote()) {
-            setQuarryStage(quarryStage);
             if (getLevel() instanceof ServerLevel serverLevel) {
                 serverLevel.getServer().tell(new TickTask(0, this::updateAutoOutputSubscription));
             }
-            if (area != null) {
-                area.setQuarry(this);
-            } else {
-                area = new QuarryArea(this);
-            }
             updateBatterySubscription();
+            formingSubs = subscribeServerTick(formingSubs, this::tryFormQuarry);
             exportItemSubs = exportItems.addChangedListener(this::updateAutoOutputSubscription);
             exportFluidSubs = exportFluids.addChangedListener(this::updateAutoOutputSubscription);
             energySubs = energyContainer.addChangedListener(this::updateBatterySubscription);
@@ -278,6 +284,12 @@ public class QuarryMachine extends WorkableTieredMachine
         if (getQuarryStage() == INITIAL || getRecipeLogic().isDone()) {
             drill = null;
         } else {
+            if (area == null) {
+                setWorkingEnabled(false);
+                getRecipeLogic().setWorkingEnabled(false);
+                return null;
+            }
+            area.setFromQuarry(this);
             if (drill == null) {
                 drill = OAEntities.QUARRY_DRILL.create(getLevel());
                 drill.setTier(tier);
@@ -287,7 +299,7 @@ public class QuarryMachine extends WorkableTieredMachine
             }
             drill.setQuarryPos(getPos());
             drill.setTargetAir(getQuarryStage() == CLEARING);
-            drill.setAirColor(GTMaterials.Copper.getMaterialRGB());
+            drill.setAirColor(OAMaterialBlocks.QUARRY_BLOCKS[tier].get().material.getMaterialRGB());
             drill.setQuarryBox(area == null ? drill.getBoundingBox() : area.getViewBox());
         }
         return drill;
@@ -295,6 +307,11 @@ public class QuarryMachine extends WorkableTieredMachine
 
     protected void tryFormQuarry() {
         if (!isRemote() && getOffsetTimer() % 10 == 0) {
+            if (quarryStage != INITIAL && formingSubs != null) {
+                formingSubs.unsubscribe();
+                formingSubs = null;
+                return;
+            }
             var pos = getPos();
             for (var direction : HORIZONTAL) {
                 // if neighbor isn't a marker skip
@@ -306,40 +323,31 @@ public class QuarryMachine extends WorkableTieredMachine
                     continue;
                 }
                 // marker has the required connections form area
-                if (area == null) {
-                    area = new QuarryArea();
-                }
-                area.setQuarry(this);
+                var area = new QuarryArea();
+                area.setFromQuarry(this);
                 area.setFromMarker(marker, Direction.Axis.X, Direction.Axis.Z);
                 if (Mth.clamp(pos.getX(), area.getMinX(), area.getMaxX()) == pos.getX() &&
                         Mth.clamp(pos.getY(), area.getMinY(), area.getMaxY()) == pos.getY() &&
                         Mth.clamp(pos.getZ(), area.getMinZ(), area.getMaxZ()) == pos.getZ()) {
-                    area = new QuarryArea(this);
                     continue;
                 }
                 area.setMaxY(area.getMinY() + 4);
                 marker.destroy(Direction.Axis.X, Direction.Axis.Z);
+                setArea(area);
                 setQuarryStage(CLEARING);
+                setWorkingEnabled(true);
+                getRecipeLogic().setWorkingEnabled(true);
             }
         }
     }
 
     public void setQuarryStage(int stage) {
-        if (stage == INITIAL && (area == null || area.isEmpty())) {
-            if (!isRemote()) {
-                formingSubs = subscribeServerTick(formingSubs, this::tryFormQuarry);
-                if (drill != null) {
-                    drill.discard();
-                    drill = null;
-                }
-            }
+        if (isRemote()) {
+            return;
         }
         if (stage != INITIAL) {
-            if (!isRemote()) {
-                if (formingSubs != null) {
-                    formingSubs.unsubscribe();
-                    formingSubs = null;
-                }
+            if (area != null) {
+                area.quarrying(stage == QUARRYING);
             }
         }
         this.quarryStage = stage;
@@ -392,7 +400,22 @@ public class QuarryMachine extends WorkableTieredMachine
 
     protected void setArea(QuarryArea area) {
         this.area = area;
-        this.area.setQuarry(this);
+    }
+
+    @Override
+    public void loadChunk(int x, int z) {
+        if (isRemote()) {
+            return;
+        }
+        ForgeChunkManager.forceChunk((ServerLevel) getLevel(), OGTMA.MOD_ID, getPos(), x, z, true, true);
+    }
+
+    @Override
+    public void unloadChunk(int x, int z) {
+        if (isRemote()) {
+            return;
+        }
+        ForgeChunkManager.forceChunk((ServerLevel) getLevel(), OGTMA.MOD_ID, getPos(), x, z, false, true);
     }
 
     //////////////////////////////////////
@@ -402,8 +425,6 @@ public class QuarryMachine extends WorkableTieredMachine
     @Override
     public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
         IFancyUIMachine.super.attachConfigurators(configuratorPanel);
-        configuratorPanel.attachConfigurators(
-                new EnumSelectorConfigurator<>(quarryMode, QuarryMode.values(), this::setQuarryMode));
         configuratorPanel.attachConfigurators(
                 new EnumSelectorConfigurator<>(quarryFluidMode, QuarryFluidMode.values(), this::setQuarryFluidMode));
     }
@@ -436,12 +457,13 @@ public class QuarryMachine extends WorkableTieredMachine
         return new EditableUI<>("quarry", WidgetGroup.class, () -> {
             var rowSize = (int) Math.sqrt(inventorySize);
             var width = rowSize * 18 + 120;
-            var height = Math.max(rowSize * 18, 80);
+            var height = Math.max((rowSize + 1) * 18, 80);
             var group = new WidgetGroup(0, 0, width, height);
 
-            var slots = new WidgetGroup(120, (height - rowSize * 18) / 2, rowSize * 18, rowSize * 18);
-            for (int y = 0; y < rowSize; y++) {
-                for (int x = 0; x < rowSize; x++) {
+            var slots = new WidgetGroup(120, (height - (rowSize + 1) * 18) / 2, rowSize * 18, rowSize * 18);
+            int x, y;
+            for (y = 0; y < rowSize; y++) {
+                for (x = 0; x < rowSize; x++) {
                     var index = y * rowSize + x;
                     var slot = new SlotWidget();
                     slot.initTemplate();
@@ -450,6 +472,162 @@ public class QuarryMachine extends WorkableTieredMachine
                     slot.setId("slot_" + index);
                     slots.addWidget(slot);
                 }
+            }
+            for (x = 0; x < rowSize; x++) {
+                var tank = new TankWidget() {
+
+                    {
+                        setAllowClickDrained(true);
+                        setAllowClickFilled(false);
+                    }
+
+                    @Override
+                    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+                        OGTMA.LOGGER.info("Mouse clicked button {} drain is {}", button,
+                                allowClickDrained ? "allowed" : "disabled");
+                        return super.mouseClicked(mouseX, mouseY, button);
+                    }
+
+                    @Override
+                    public void handleClientAction(int id, FriendlyByteBuf buffer) {
+                        super.handleClientAction(id, buffer);
+                        if (id == 1) {
+                            boolean isShiftKeyDown = buffer.readBoolean();
+                            int clickResult = tryClickContainer(isShiftKeyDown);
+                            if (clickResult >= 0) {
+                                writeUpdateInfo(4, buf -> buf.writeVarInt(clickResult));
+                            }
+                        }
+                    }
+
+                    protected int tryClickContainer(boolean isShiftKeyDown) {
+                        if (this.fluidTank == null) {
+                            return -1;
+                        } else {
+                            Player player = this.gui.entityPlayer;
+                            ItemStack currentStack = this.gui.getModularUIContainer().getCarried();
+                            IFluidHandlerItem handler = FluidUtil.getFluidHandler(currentStack).resolve().orElse(null);
+                            if (handler == null) {
+                                return -1;
+                            } else {
+                                int maxAttempts = isShiftKeyDown ? currentStack.getCount() : 1;
+                                FluidStack initialFluid = this.fluidTank.getFluidInTank(this.tank).copy();
+                                boolean performedEmptying;
+                                ItemStack drainedResult;
+                                int i;
+                                if (this.allowClickFilled && initialFluid.getAmount() > 0) {
+                                    performedEmptying = false;
+                                    drainedResult = ItemStack.EMPTY;
+
+                                    for (i = 0; i < maxAttempts; ++i) {
+                                        FluidActionResult result = FluidUtil.tryFillContainer(currentStack,
+                                                this.fluidTank, Integer.MAX_VALUE, (Player) null, false);
+                                        if (!result.isSuccess()) {
+                                            break;
+                                        }
+
+                                        ItemStack remainingStack = FluidUtil.tryFillContainer(currentStack,
+                                                this.fluidTank, Integer.MAX_VALUE, (Player) null, true).getResult();
+                                        performedEmptying = true;
+                                        currentStack.shrink(1);
+                                        if (drainedResult.isEmpty()) {
+                                            drainedResult = remainingStack.copy();
+                                        } else if (ItemStack.isSameItemSameTags(drainedResult, remainingStack)) {
+                                            if (drainedResult.getCount() < drainedResult.getMaxStackSize()) {
+                                                drainedResult.grow(1);
+                                            } else {
+                                                player.getInventory().placeItemBackInInventory(remainingStack);
+                                            }
+                                        } else {
+                                            player.getInventory().placeItemBackInInventory(drainedResult);
+                                            drainedResult = remainingStack.copy();
+                                        }
+                                    }
+
+                                    if (performedEmptying) {
+                                        SoundEvent soundevent = initialFluid.getFluid().getFluidType()
+                                                .getSound(initialFluid, SoundActions.BUCKET_FILL);
+                                        if (soundevent == null) {
+                                            soundevent = SoundEvents.BUCKET_FILL;
+                                        }
+
+                                        player.level().playSound((Player) null, player.position().x,
+                                                player.position().y + 0.5, player.position().z, soundevent,
+                                                SoundSource.BLOCKS, 1.0F, 1.0F);
+                                        if (currentStack.isEmpty()) {
+                                            this.gui.getModularUIContainer().setCarried(drainedResult);
+                                        } else {
+                                            this.gui.getModularUIContainer().setCarried(currentStack);
+                                            player.getInventory().placeItemBackInInventory(drainedResult);
+                                        }
+
+                                        return this.gui.getModularUIContainer().getCarried().getCount();
+                                    }
+                                }
+
+                                if (this.allowClickDrained) {
+                                    performedEmptying = false;
+                                    drainedResult = ItemStack.EMPTY;
+
+                                    for (i = 0; i < maxAttempts; ++i) {
+                                        int remainingCapacity = this.fluidTank.getTankCapacity(this.tank) -
+                                                this.fluidTank.getFluidInTank(this.tank).getAmount();
+                                        FluidActionResult result = FluidUtil.tryEmptyContainer(currentStack,
+                                                this.fluidTank, remainingCapacity, (Player) null, false);
+                                        if (!result.isSuccess()) {
+                                            break;
+                                        }
+
+                                        ItemStack remainingStack = FluidUtil.tryEmptyContainer(currentStack,
+                                                this.fluidTank, remainingCapacity, (Player) null, true).getResult();
+                                        performedEmptying = true;
+                                        currentStack.shrink(1);
+                                        if (drainedResult.isEmpty()) {
+                                            drainedResult = remainingStack.copy();
+                                        } else if (ItemStack.isSameItemSameTags(drainedResult, remainingStack)) {
+                                            if (drainedResult.getCount() < drainedResult.getMaxStackSize()) {
+                                                drainedResult.grow(1);
+                                            } else {
+                                                player.getInventory().placeItemBackInInventory(remainingStack);
+                                            }
+                                        } else {
+                                            player.getInventory().placeItemBackInInventory(drainedResult);
+                                            drainedResult = remainingStack.copy();
+                                        }
+                                    }
+
+                                    FluidStack filledFluid = this.fluidTank.getFluidInTank(this.tank);
+                                    if (performedEmptying) {
+                                        SoundEvent soundevent = filledFluid.getFluid().getFluidType()
+                                                .getSound(filledFluid, SoundActions.BUCKET_EMPTY);
+                                        if (soundevent == null) {
+                                            soundevent = SoundEvents.BUCKET_EMPTY;
+                                        }
+
+                                        player.level().playSound((Player) null, player.position().x,
+                                                player.position().y + 0.5, player.position().z, soundevent,
+                                                SoundSource.BLOCKS, 1.0F, 1.0F);
+                                        if (currentStack.isEmpty()) {
+                                            this.gui.getModularUIContainer().setCarried(drainedResult);
+                                        } else {
+                                            this.gui.getModularUIContainer().setCarried(currentStack);
+                                            player.getInventory().placeItemBackInInventory(drainedResult);
+                                        }
+
+                                        return this.gui.getModularUIContainer().getCarried().getCount();
+                                    }
+                                }
+
+                                return -1;
+                            }
+                        }
+                    }
+                };
+                tank.initTemplate();
+                tank.setSelfPosition(new Position(x * 18, y * 18));
+                tank.setBackground(GuiTextures.FLUID_SLOT);
+                tank.setId("tank_" + x);
+                slots.addWidget(tank);
             }
 
             var componentPanel = new ComponentPanelWidget(4, 5, list -> {});
@@ -472,6 +650,14 @@ public class QuarryMachine extends WorkableTieredMachine
                     slot.setHandlerSlot(machine.exportItems, index);
                     slot.setCanTakeItems(true);
                     slot.setCanPutItems(false);
+                }
+            });
+            WidgetUtils.widgetByIdForEach(group, "^tank_[0-9]+$", TankWidget.class, tank -> {
+                var index = WidgetUtils.widgetIdIndex(tank);
+                if (index >= 0 && index < machine.exportFluids.getTanks()) {
+                    tank.setFluidTank(machine.exportFluids, index);
+                    tank.setAllowClickDrained(true);
+                    tank.setAllowClickFilled(false);
                 }
             });
             WidgetUtils.widgetByIdForEach(group, "^component_panel$", ComponentPanelWidget.class, panel -> {

@@ -60,7 +60,6 @@ public class QuarryDrillEntity extends Entity {
 
     @Override
     public boolean canBeCollidedWith() {
-        // todo: fix collision
         return true;
     }
 

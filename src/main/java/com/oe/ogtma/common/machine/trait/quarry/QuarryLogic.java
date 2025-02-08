@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.misc.IgnoreEnergyRecipeHandler;
 import com.gregtechceu.gtceu.api.misc.ItemRecipeHandler;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
+import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
 import com.gregtechceu.gtceu.api.transfer.item.NotifiableAccountedInvWrapper;
 import com.gregtechceu.gtceu.common.data.GTMaterialItems;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
@@ -23,24 +24,23 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.Tags;
 import net.minecraftforge.items.IItemHandlerModifiable;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import com.mojang.datafixers.util.Pair;
 import com.oe.ogtma.api.area.QuarryArea;
+import com.oe.ogtma.api.utility.LootUtil;
 import com.oe.ogtma.api.utility.OAMachineUtils;
 import com.oe.ogtma.common.data.OAMaterialBlocks;
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
-import com.oe.ogtma.common.machine.quarry.def.IQuarry;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -60,7 +60,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
 
     @Nullable
     protected NotifiableAccountedInvWrapper cachedItemHandler = null;
-    protected final IQuarry quarry;
+    protected final List<IRecipeHandler<?>> cachedFluidHandlers = new ArrayList<>();
     @Persisted
     @Getter
     protected int speed;
@@ -90,13 +90,15 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     @Persisted
     @Getter
     protected BlockPos last;
+    @Persisted
+    @Getter
+    protected Set<ChunkPos> loadedChunks;
 
     @SuppressWarnings("UnstableApiUsage")
     public QuarryLogic(IRecipeLogicMachine machine, int speed, int fortune, Object... args) {
         super(machine);
-        this.quarry = (IQuarry) machine;
-        var temp = new BlockPos[OAMachineUtils.blocksPerIterationScaling.applyAsInt(quarry.getVoltageTier())];
-        Arrays.fill(temp, quarry.getPos());
+        var temp = new BlockPos[OAMachineUtils.blocksPerIterationScaling.applyAsInt(getMachine().getVoltageTier())];
+        Arrays.fill(temp, getMachine().getPos());
         this.blocksToMine = temp;
         this.capabilitiesProxy = Tables.newCustomTable(new EnumMap<>(IO.class), IdentityHashMap::new);
         this.speed = speed;
@@ -110,7 +112,8 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         this.capabilitiesProxy.put(IO.IN, inputItemHandler.getCapability(), List.of(inputItemHandler));
         this.capabilitiesProxy.put(IO.IN, inputEnergyHandler.getCapability(), List.of(inputEnergyHandler));
         this.capabilitiesProxy.put(IO.OUT, outputItemHandler.getCapability(), List.of(outputItemHandler));
-        this.last = quarry.getPos();
+        this.last = machine.self().getPos();
+        this.loadedChunks = new HashSet<>();
     }
 
     //////////////////////////////////////
@@ -135,11 +138,19 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         return cachedItemHandler;
     }
 
+    protected List<IRecipeHandler<?>> getCachedFluidHandlers() {
+        if (cachedFluidHandlers.isEmpty()) {
+            cachedFluidHandlers.addAll(
+                    Objects.requireNonNull(machine.getCapabilitiesProxy().get(IO.OUT, FluidRecipeCapability.CAP)));
+        }
+        return cachedFluidHandlers;
+    }
+
     protected @Nullable QuarryArea.QuarryAreaIterator getAreaIterator() {
-        if (quarry.getArea() == null || quarry.getQuarryStage() == QuarryMachine.INITIAL) {
+        if (getMachine().getArea() == null || getMachine().getQuarryStage() == QuarryMachine.INITIAL) {
             areaIterator = null;
         } else if (areaIterator == null) {
-            areaIterator = quarry.getArea().iterator();
+            areaIterator = getMachine().getArea().iterator();
         }
         return areaIterator;
     }
@@ -149,13 +160,19 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         return MANAGED_FIELD_HOLDER;
     }
 
+    @Override
+    public QuarryMachine getMachine() {
+        return (QuarryMachine) super.getMachine();
+    }
+
     //////////////////////////////////////
     // ******** FACTS & LOGIC **********//
     //////////////////////////////////////
 
     @Override
     public void serverTick() {
-        if (!isSuspend() && getMachine().getLevel() instanceof ServerLevel serverLevel && checkCanMine()) {
+        var quarry = getMachine();
+        if (!isSuspend() && quarry.getLevel() instanceof ServerLevel serverLevel && checkCanMine()) {
             // if the inventory is not full, drain energy etc. from the miner
             // the storages have already been checked earlier
             if (!isInventoryFull()) {
@@ -172,7 +189,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
             }
 
             // if there are blocks to mine and the correct amount of time has passed, do the mining
-            if (getMachine().getOffsetTimer() %
+            if (quarry.getOffsetTimer() %
                     (quarry.getQuarryStage() == QuarryMachine.CLEARING ? speed / 3 : speed) == 0) {
                 for (int i = 0; i < blocksToMine.length; i++) {
                     var pos = blocksToMine[i];
@@ -197,8 +214,13 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
                         getRegularBlockDrops(blockDrops, blockState, builder);
                     }
                     // handle recipe type
-                    if (blockState.is(Tags.Blocks.ORES) && !blockDrops.isEmpty() && hasPostProcessing()) {
+                    if (hasPostProcessing(blockState, blockDrops)) {
                         doPostProcessing(blockDrops, blockState, builder);
+                    }
+                    // handle fluids
+                    if (LootUtil.isFluid(blockState)) {
+                        var fluidOutput = getFluidBlockDrops(blockState);
+                        insertFluids(fluidOutput);
                     }
                     // try to insert them
                     mineAndInsertItems(blockDrops, pos);
@@ -208,6 +230,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
                     return;
                 }
                 var result = getBlocksToMine();
+                loadChunks(blocksToMine);
                 if (result.getSecond() == 0 && (areaIterator == null || !areaIterator.hasNext())) {
                     if (quarry.getQuarryStage() == QuarryMachine.CLEARING) {
                         quarry.getDrill().setTargetAir(false);
@@ -236,17 +259,33 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         }
     }
 
+    protected void loadChunks(BlockPos... targets) {
+        var quarry = getMachine();
+        var drill = quarry.getDrill();
+        var drillPos = drill.chunkPosition();
+        var chunksToLoad = new HashSet<ChunkPos>();
+        chunksToLoad.add(drillPos);
+        for (var target : targets) {
+            chunksToLoad.add(new ChunkPos(target.getX() >> 4, target.getZ() >> 4));
+        }
+        loadedChunks.stream().filter(pos -> !chunksToLoad.contains(pos))
+                .forEach(pos -> quarry.unloadChunk(pos.x, pos.z));
+        chunksToLoad.stream().filter(pos -> !loadedChunks.contains(pos)).forEach(pos -> quarry.loadChunk(pos.x, pos.z));
+        loadedChunks.clear();
+        loadedChunks = chunksToLoad;
+    }
+
     protected boolean skipBlock(BlockPos pos, BlockState blockState) {
+        var quarry = getMachine();
         return pos.equals(quarry.getPos()) || switch (quarry.getQuarryStage()) {
             case QuarryMachine.CLEARING -> blockState.isAir() && (areaIterator == null || !areaIterator.isEdge(pos));
-            case QuarryMachine.QUARRYING -> blockState.isAir() ||
-                    (blockState.getFluidState() != Fluids.EMPTY.defaultFluidState() &&
-                            !blockState.getFluidState().isSource());
+            case QuarryMachine.QUARRYING -> blockState.isAir();
             default -> true;
-        } || (!blockState.isAir() && blockState.getDestroySpeed(quarry.getLevel(), pos) <= 0);
+        } || (!blockState.isAir() && blockState.getDestroySpeed(quarry.getLevel(), pos) < 0);
     }
 
     protected Pair<BlockPos, Integer> getBlocksToMine() {
+        var quarry = getMachine();
         var level = quarry.getLevel();
         var quarryPos = quarry.getPos();
         var iterator = getAreaIterator();
@@ -280,7 +319,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     }
 
     protected boolean checkCanMine() {
-        return !done && quarry.getQuarryStage() != QuarryMachine.INITIAL;
+        return !done && getMachine().drainInput(true) && getMachine().getQuarryStage() != QuarryMachine.INITIAL;
     }
 
     public void resetArea(boolean checkToMine) {
@@ -298,17 +337,19 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         super.resetRecipeLogic();
         areaIterator = null;
         cachedItemHandler = null;
+        cachedFluidHandlers.clear();
     }
 
     @Override
     public void inValid() {
         super.inValid();
         cachedItemHandler = null;
+        cachedFluidHandlers.clear();
         resetArea(false);
     }
 
-    protected boolean hasPostProcessing() {
-        return !silkTouchMode;
+    protected boolean hasPostProcessing(BlockState state, NonNullList<ItemStack> drops) {
+        return !silkTouchMode && LootUtil.isOre(state) && !drops.isEmpty();
     }
 
     protected boolean doPostProcessing(NonNullList<ItemStack> blockDrops, BlockState blockState,
@@ -326,7 +367,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
             if (match == null) continue;
 
             var eut = RecipeHelper.getInputEUt(match);
-            if (GTUtil.getTierByVoltage(eut) <= quarry.getVoltageTier()) {
+            if (GTUtil.getTierByVoltage(eut) <= getMachine().getVoltageTier()) {
                 if (match.handleRecipeIO(IO.OUT, this, chanceCaches)) {
                     blockDrops.clear();
                     var result = new ArrayList<ItemStack>();
@@ -348,9 +389,21 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         blockDrops.addAll(outputs);
     }
 
+    @SuppressWarnings("unchecked")
+    protected void insertFluids(FluidIngredient fluidOutput) {
+        var remaining = List.of(fluidOutput);
+        for (var handler : getCachedFluidHandlers()) {
+            remaining = (List<FluidIngredient>) handler.handleRecipe(IO.OUT, null, remaining, null, false);
+            if (remaining == null) {
+                break;
+            }
+        }
+    }
+
     protected void mineAndInsertItems(NonNullList<ItemStack> blockDrops, BlockPos pos) {
         // If the block's drops can fit in the inventory, move the previously mined position to the block
         // remove the ore block's position from the mining queue
+        var quarry = getMachine();
         if (quarry.getQuarryStage() == QuarryMachine.CLEARING) {
             var iterator = getAreaIterator();
             if (iterator != null && iterator.isEdge(pos)) {

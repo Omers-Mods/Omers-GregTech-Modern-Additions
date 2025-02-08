@@ -1,5 +1,7 @@
 package com.oe.ogtma.api.area;
 
+import com.lowdragmc.lowdraglib.syncdata.ITagSerializable;
+
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -8,34 +10,62 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
-import com.oe.ogtma.common.machine.quarry.def.IQuarry;
-import com.oe.ogtma.common.machine.quarry.def.QuarryMode;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
 @MethodsReturnNonnullByDefault
 @NoArgsConstructor
+@Accessors(fluent = true)
+@Data
 public class QuarryArea extends Area implements Iterable<BlockPos> {
 
     protected AABB cachedViewBox;
-    @Setter
-    protected IQuarry quarry;
-
-    public QuarryArea(IQuarry quarry) {
-        this.quarry = quarry;
-    }
+    protected int minBuildHeight = 0;
+    protected boolean quarrying = false;
+    protected int qX, qY, qZ;
 
     public AABB getViewBox() {
         if (cachedViewBox == null) {
-            var minY = quarry == null || quarry.getQuarryStage() != QuarryMachine.QUARRYING ? this.minY :
-                    quarry.getLevel().getMinBuildHeight() + 1;
-            cachedViewBox = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+            cachedViewBox = new AABB(minX, quarrying ? minBuildHeight : minY, minZ, maxX, maxY, maxZ);
         }
         return cachedViewBox;
+    }
+
+    public void setFromQuarry(QuarryMachine quarry) {
+        this.minBuildHeight = quarry.getLevel().getMinBuildHeight();
+        this.quarrying = quarry.getQuarryStage() == QuarryMachine.QUARRYING;
+        var pos = quarry.getPos();
+        this.qX = pos.getX();
+        this.qY = pos.getY();
+        this.qZ = pos.getZ();
+    }
+
+    @Override
+    public CompoundTag serializeNBT() {
+        var tag = super.serializeNBT();
+        tag.putInt("MinBuild", minBuildHeight);
+        tag.putBoolean("Quarrying", quarrying);
+        tag.putIntArray("QuarryPos", new int[] { qX, qY, qZ });
+        return tag;
+    }
+
+    @Override
+    public void deserializeNBT(CompoundTag tag) {
+        super.deserializeNBT(tag);
+        this.minBuildHeight = tag.getInt("MinBuild");
+        this.quarrying = tag.getBoolean("Quarrying");
+        var qPos = tag.getIntArray("QuarryPos");
+        if (qPos.length == 3) {
+            this.qX = qPos[0];
+            this.qY = qPos[1];
+            this.qZ = qPos[2];
+        }
     }
 
     @NotNull
@@ -44,7 +74,8 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
         return new QuarryAreaIterator(this);
     }
 
-    public static class QuarryAreaIterator implements Iterator<BlockPos>, INBTSerializable<CompoundTag> {
+    public static class QuarryAreaIterator implements Iterator<BlockPos>, INBTSerializable<CompoundTag>,
+                                           ITagSerializable<CompoundTag> {
 
         @Getter
         protected int minX, minY, minZ, maxX, maxY, maxZ;
@@ -58,17 +89,15 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
         protected boolean first;
 
         public QuarryAreaIterator(QuarryArea area) {
-            var quarrying = area.quarry.getQuarryStage() == QuarryMachine.QUARRYING;
-            minX = area.getMinX() + (quarrying ? 1 : 0);
-            minY = quarrying ? area.quarry.getLevel().getMinBuildHeight() : area.getMinY();
-            minZ = area.getMinZ() + (quarrying ? 1 : 0);
-            maxX = area.getMaxX() - (quarrying ? 1 : 0);
-            y = maxY = quarrying ? area.getMinY() : area.getMaxY();
-            maxZ = area.getMaxZ() - (quarrying ? 1 : 0);
-            yPriority = area.quarry.getQuarryMode() == QuarryMode.VERTICAL;
-            var pos = area.quarry.getPos();
-            x = Mth.clamp(pos.getX(), minX, maxX);
-            z = Mth.clamp(pos.getZ(), minZ, maxZ);
+            minX = area.minX + (area.quarrying ? 1 : 0);
+            minY = area.quarrying ? area.minBuildHeight : area.minY;
+            minZ = area.minZ + (area.quarrying ? 1 : 0);
+            maxX = area.maxX - (area.quarrying ? 1 : 0);
+            y = maxY = area.quarrying ? area.minY : area.maxY;
+            maxZ = area.maxZ - (area.quarrying ? 1 : 0);
+            yPriority = false;
+            x = Mth.clamp(area.qX, minX, maxX);
+            z = Mth.clamp(area.qZ, minZ, maxZ);
             xPos = x == minX;
             zPos = z == minZ;
             first = true;
@@ -184,17 +213,31 @@ public class QuarryArea extends Area implements Iterable<BlockPos> {
                 maxX = values[6];
                 maxY = values[7];
                 maxZ = values[8];
-                xPos = tag.getBoolean("XPos");
-                zPos = tag.getBoolean("ZPos");
-                yPriority = tag.getBoolean("YPriority");
             }
+            xPos = tag.getBoolean("XPos");
+            zPos = tag.getBoolean("ZPos");
+            yPriority = tag.getBoolean("YPriority");
         }
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof QuarryArea)) return false;
-        return super.equals(o);
+    public final boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof QuarryArea area)) return false;
+        if (!super.equals(object)) return false;
+
+        return minBuildHeight == area.minBuildHeight && quarrying == area.quarrying && qX == area.qX && qY == area.qY &&
+                qZ == area.qZ;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + minBuildHeight;
+        result = 31 * result + Boolean.hashCode(quarrying);
+        result = 31 * result + qX;
+        result = 31 * result + qY;
+        result = 31 * result + qZ;
+        return result;
     }
 }

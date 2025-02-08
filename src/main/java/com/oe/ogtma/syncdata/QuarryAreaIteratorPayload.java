@@ -18,6 +18,8 @@ public class QuarryAreaIteratorPayload extends ObjectTypedPayload<QuarryArea.Qua
 
     @Override
     public void deserializeNBT(Tag tag) {
-        payload.deserializeNBT((CompoundTag) tag);
+        if (payload != null) {
+            payload.deserializeNBT((CompoundTag) tag);
+        }
     }
 }

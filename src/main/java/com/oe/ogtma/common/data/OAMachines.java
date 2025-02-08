@@ -11,7 +11,6 @@ import com.gregtechceu.gtceu.utils.FormattingUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
-import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
 import com.oe.ogtma.config.OAConfig;
 
@@ -36,7 +35,7 @@ public class OAMachines {
                             .rotationState(RotationState.NON_Y_AXIS)
                             .langValue("%s Quarry %s".formatted(VLVH[tier], VLVT[tier]))
                             .recipeType(MACERATOR_RECIPES)
-                            .editableUI(QuarryMachine.EDITABLE_UI_CREATOR.apply(OGTMA.id("quarry"),
+                            .editableUI(QuarryMachine.EDITABLE_UI_CREATOR.apply(id("quarry"),
                                     inventorySizeScaling.applyAsInt(tier)))
                             .workableTieredHullRenderer(id("block/machines/quarry"))
                             .tooltipBuilder(((stack, tooltip) -> {
