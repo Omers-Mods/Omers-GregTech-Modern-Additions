@@ -35,7 +35,6 @@ import com.lowdragmc.lowdraglib.syncdata.annotation.*;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 import com.lowdragmc.lowdraglib.utils.Position;
 
-import com.oe.ogtma.api.gui.tab.SlotsTab;
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.Util;
@@ -55,6 +54,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.api.area.QuarryArea;
 import com.oe.ogtma.api.gui.configurator.EnumSelectorConfigurator;
+import com.oe.ogtma.api.gui.tab.SlotsTab;
 import com.oe.ogtma.api.utility.OAMachineUtils;
 import com.oe.ogtma.common.blockentity.marker.MarkerBlockEntity;
 import com.oe.ogtma.common.data.OAEntities;
@@ -285,8 +285,8 @@ public class QuarryMachine extends WorkableTieredMachine
                 drill.setPos((double) (area.getMaxX() + area.getMinX()) / 2, area.getMaxY(),
                         (double) (area.getMaxZ() + area.getMinZ()) / 2);
                 getLevel().addFreshEntity(drill);
+                drill.setQuarryPos(getPos());
             }
-            drill.setQuarryPos(getPos());
             drill.setTargetAir(getQuarryStage() == CLEARING);
             drill.setAirColor(OAMaterialBlocks.QUARRY_BLOCKS[tier].get().material.getMaterialRGB());
             drill.setQuarryBox(area == null ? drill.getBoundingBox() : area.getViewBox());
@@ -458,7 +458,7 @@ public class QuarryMachine extends WorkableTieredMachine
     protected static EditableUI<WidgetGroup, QuarryMachine> createTemplate() {
         return new EditableUI<>("quarry", WidgetGroup.class, () -> {
             var group = new WidgetGroup(0, 0, 120, 100);
-            
+
             var componentPanel = new ComponentPanelWidget(0, 0, list -> {});
             componentPanel.setMaxWidthLimit(110);
             componentPanel.setId("component_panel");

@@ -8,11 +8,11 @@ import net.minecraft.nbt.Tag;
 import com.oe.ogtma.api.area.QuarryArea;
 import org.jetbrains.annotations.Nullable;
 
-public class QuarryAreaIteratorPayload extends ObjectTypedPayload<QuarryArea.QuarryAreaIterator> {
+public class AreaChunkIteratorPayload extends ObjectTypedPayload<QuarryArea.AreaChunkIterator> {
 
     @Nullable
     @Override
-    public CompoundTag serializeNBT() {
+    public Tag serializeNBT() {
         return payload.serializeNBT();
     }
 

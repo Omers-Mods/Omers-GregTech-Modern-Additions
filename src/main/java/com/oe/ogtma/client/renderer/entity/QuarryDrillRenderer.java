@@ -58,9 +58,6 @@ public class QuarryDrillRenderer extends EntityRenderer<QuarryDrillEntity> {
         var target = drill.getMoveTarget();
         var pos = drill.position();
         var posDelta = new Vec3(target.getX() - pos.x, target.getY() + 3 - pos.y, target.getZ() - pos.z);
-        if (posDelta.y >= 0) {
-            return;
-        }
         poseStack.pushPose();
         poseStack.translate(0, .5, 0);
         yOffset = .5f;

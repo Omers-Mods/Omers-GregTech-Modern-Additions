@@ -8,22 +8,25 @@ import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
+
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
+
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Items;
 
 public class SlotsTab implements IFancyUIProvider {
+
     public static final Component title = Component.translatable("ogtma.gui.tooltip.inventory");
     public static final IGuiTexture icon = new ItemStackTexture(Items.CHEST);
 
     protected final NotifiableItemStackHandler inventory;
     protected final NotifiableFluidTank tanks;
     protected final int rows;
-    
+
     public SlotsTab(NotifiableItemStackHandler inventory, NotifiableFluidTank tanks, int rows) {
         this.inventory = inventory;
         this.tanks = tanks;
@@ -67,7 +70,7 @@ public class SlotsTab implements IFancyUIProvider {
             }
             col++;
         }
-        
+
         return group;
     }
 }

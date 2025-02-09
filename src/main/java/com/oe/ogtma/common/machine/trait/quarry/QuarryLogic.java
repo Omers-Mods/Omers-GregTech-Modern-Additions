@@ -88,7 +88,9 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     protected final IgnoreEnergyRecipeHandler inputEnergyHandler;
 
     @Persisted
-    protected QuarryArea.QuarryAreaIterator areaIterator;
+    protected QuarryArea.AreaChunkIterator chunksIterator;
+    @Persisted
+    protected QuarryArea.ChunkBlockIterator areaIterator;
     @Persisted
     @Getter
     protected BlockPos last;
@@ -154,11 +156,18 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         return cachedFluidHandlers;
     }
 
-    protected @Nullable QuarryArea.QuarryAreaIterator getAreaIterator() {
-        if (getMachine().getArea() == null || getMachine().getQuarryStage() == QuarryMachine.INITIAL) {
+    protected @Nullable QuarryArea.ChunkBlockIterator getAreaIterator() {
+        var quarry = getMachine();
+        if (quarry.getArea() == null || quarry.getQuarryStage() == QuarryMachine.INITIAL) {
+            chunksIterator = null;
             areaIterator = null;
-        } else if (areaIterator == null) {
-            areaIterator = getMachine().getArea().iterator();
+        } else {
+            if (chunksIterator == null) {
+                chunksIterator = quarry.getArea().iterator();
+            }
+            if ((areaIterator == null || !areaIterator.hasNext()) && chunksIterator.hasNext()) {
+                areaIterator = chunksIterator.next();
+            }
         }
         return areaIterator;
     }
@@ -245,10 +254,11 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
                 }
                 var result = getBlocksToMine();
                 loadChunks(blocksToMine);
-                if (result.getSecond() == 0 && (areaIterator == null || !areaIterator.hasNext())) {
+                if (result.getSecond() == 0 && (getAreaIterator() == null || !getAreaIterator().hasNext())) {
                     if (quarry.getQuarryStage() == QuarryMachine.CLEARING) {
                         quarry.getDrill().setTargetAir(false);
                         quarry.setQuarryStage(QuarryMachine.QUARRYING);
+                        chunksIterator = null;
                         areaIterator = null;
                     } else if (quarry.getQuarryStage() == QuarryMachine.QUARRYING) {
                         done = true;
@@ -297,7 +307,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     protected boolean skipBlock(BlockPos pos, BlockState blockState) {
         var quarry = getMachine();
         return pos.equals(quarry.getPos()) || switch (quarry.getQuarryStage()) {
-            case QuarryMachine.CLEARING -> blockState.isAir() && (areaIterator == null || !areaIterator.isEdge(pos));
+            case QuarryMachine.CLEARING -> blockState.isAir() && (areaIterator == null || !chunksIterator.isEdge(pos));
             case QuarryMachine.QUARRYING -> blockState.isAir() ||
                     (LootUtil.isFluid(blockState) && !LootUtil.isFluidSource(blockState));
             default -> true;
@@ -308,12 +318,11 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         var quarry = getMachine();
         var level = quarry.getLevel();
         var quarryPos = quarry.getPos();
-        var iterator = getAreaIterator();
-        var exists = iterator != null;
-        int x = 0, y = 0, z = 0, count = 0;
+        int x = 0, y = quarry.getLevel().getMinBuildHeight(), z = 0, count = 0;
         for (int i = 0, chances = 0; i < blocksToMine.length; i++) {
             var pos = quarryPos;
-            if (exists && iterator.hasNext()) {
+            var iterator = getAreaIterator();
+            if (iterator != null && iterator.hasNext()) {
                 pos = iterator.next();
                 x += pos.getX();
                 y = Math.max(y, pos.getY());
@@ -374,6 +383,8 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         super.inValid();
         cachedItemHandler = null;
         cachedFluidHandlers.clear();
+        chunksIterator = null;
+        areaIterator = null;
         resetArea(false);
     }
 
@@ -450,7 +461,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
             quarry.getLevel().setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         } else if (quarry.getQuarryStage() == QuarryMachine.CLEARING) {
             var iterator = getAreaIterator();
-            if (iterator != null && iterator.isEdge(pos)) {
+            if (iterator != null && chunksIterator.isEdge(pos)) {
                 quarry.getLevel().setBlock(pos,
                         OAMaterialBlocks.QUARRY_PIPE_BLOCKS[quarry.getVoltageTier()].getDefaultState(),
                         Block.UPDATE_ALL);
@@ -466,7 +477,7 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
         var quarry = getMachine();
         if (quarry.getQuarryStage() == QuarryMachine.CLEARING) {
             var iterator = getAreaIterator();
-            if (iterator != null && iterator.isEdge(pos)) {
+            if (iterator != null && chunksIterator.isEdge(pos)) {
                 quarry.getLevel().setBlock(pos,
                         OAMaterialBlocks.QUARRY_PIPE_BLOCKS[quarry.getVoltageTier()].getDefaultState(),
                         Block.UPDATE_ALL);
