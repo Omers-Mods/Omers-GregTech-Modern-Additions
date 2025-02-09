@@ -16,8 +16,10 @@
   "block.ogtma.tungsten_steel_quarry_pipe": "Quarry Pipe",
   "block.ogtma.wrought_iron_quarry_pipe": "Quarry Pipe",
   "config.jade.plugin_ogtma.quarry": "[OGTMA] Quarry",
+  "config.ogtma.option.dev": "Dev",
   "config.ogtma.option.enableQuarry": "Enable Quarry",
   "config.ogtma.option.features": "Features",
+  "config.ogtma.option.loadedChunkOverlay": "Loaded Chunk Overlay",
   "config.ogtma.option.quarry": "Quarry",
   "config.ogtma.option.renderQuarryDrill": "Render Quarry Drill",
   "entity.ogtma.quarry_drill": "Quarry Drill",
@@ -34,5 +36,5 @@
   "ogtma.option.quarry_mode": "Quarry Mode",
   "ogtma.option.quarry_mode.horizontal": "Horizontal",
   "ogtma.option.quarry_mode.vertical": "Vertical",
-  "tab.ogtma.tab": "Omer's GregTech Modern Additions"
+  "tab.ogtma.tab": "OmerTech"
 }

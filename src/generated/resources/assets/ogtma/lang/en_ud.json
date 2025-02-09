@@ -16,8 +16,10 @@
   "block.ogtma.tungsten_steel_quarry_pipe": "ǝdıԀ ʎɹɹɐnὉ",
   "block.ogtma.wrought_iron_quarry_pipe": "ǝdıԀ ʎɹɹɐnὉ",
   "config.jade.plugin_ogtma.quarry": "ʎɹɹɐnὉ ]ⱯW⟘⅁O[",
+  "config.ogtma.option.dev": "ʌǝᗡ",
   "config.ogtma.option.enableQuarry": "ʎɹɹɐnὉ ǝןqɐuƎ",
   "config.ogtma.option.features": "sǝɹnʇɐǝℲ",
+  "config.ogtma.option.loadedChunkOverlay": "ʎɐןɹǝʌO ʞunɥƆ pǝpɐoꞀ",
   "config.ogtma.option.quarry": "ʎɹɹɐnὉ",
   "config.ogtma.option.renderQuarryDrill": "ןןıɹᗡ ʎɹɹɐnὉ ɹǝpuǝᴚ",
   "entity.ogtma.quarry_drill": "ןןıɹᗡ ʎɹɹɐnὉ",
@@ -34,5 +36,5 @@
   "ogtma.option.quarry_mode": "ǝpoW ʎɹɹɐnὉ",
   "ogtma.option.quarry_mode.horizontal": "ןɐʇuozıɹoH",
   "ogtma.option.quarry_mode.vertical": "ןɐɔıʇɹǝΛ",
-  "tab.ogtma.tab": "suoıʇıppⱯ uɹǝpoW ɥɔǝ⟘bǝɹ⅁ s,ɹǝɯO"
+  "tab.ogtma.tab": "ɥɔǝ⟘ɹǝɯO"
 }
