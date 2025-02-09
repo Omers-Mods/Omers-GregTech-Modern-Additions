@@ -59,7 +59,7 @@ public class OAMachines {
                                 tooltip.add(Component.translatable("ogtma.machine.quarry.working_area_max"));
                             }))
                             .register(),
-                    tiersBetween(LV, IV));
+                    tiersBetween(MV, UHV));
         } else {
             QUARRY = new MachineDefinition[0];
         }
