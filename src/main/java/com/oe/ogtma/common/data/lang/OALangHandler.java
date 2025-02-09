@@ -19,5 +19,9 @@ public class OALangHandler {
         provider.add("ogtma.option.quarry_fluid_mode.ignore", "Ignore");
         provider.add("ogtma.option.quarry_fluid_mode.collect", "Collect");
         provider.add("ogtma.option.quarry_fluid_mode.void", "Void Excess");
+
+        // gui tooltips
+        provider.add("ogtma.gui.tooltip.inventory", "Inventory");
+        provider.add("ogtma.gui.tooltip.tanks", "Tanks");
     }
 }

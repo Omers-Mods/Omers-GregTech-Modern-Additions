@@ -343,12 +343,21 @@ public class QuarryLogic extends RecipeLogic implements IRecipeCapabilityHolder 
     }
 
     public void resetArea(boolean clearIterator) {
+        var quarry = getMachine();
+        if (quarry.isRemote()) {
+            return;
+        }
         if (isDone()) {
             setWorkingEnabled(false);
         }
         done = false;
         if (clearIterator) {
             areaIterator = null;
+            var drill = quarry.getDrill();
+            if (drill != null) {
+                drill.discard();
+                quarry.setDrill(null);
+            }
         }
     }
 

@@ -9,8 +9,8 @@ import com.gregtechceu.gtceu.api.gui.WidgetUtils;
 import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
 import com.gregtechceu.gtceu.api.gui.editor.EditableUI;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
+import com.gregtechceu.gtceu.api.gui.fancy.TabsWidget;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
-import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.WorkableTieredMachine;
@@ -35,32 +35,22 @@ import com.lowdragmc.lowdraglib.syncdata.annotation.*;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 import com.lowdragmc.lowdraglib.utils.Position;
 
+import com.oe.ogtma.api.gui.tab.SlotsTab;
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.common.SoundActions;
 import net.minecraftforge.common.world.ForgeChunkManager;
-import net.minecraftforge.fluids.FluidActionResult;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 
 import com.oe.ogtma.OGTMA;
 import com.oe.ogtma.api.area.QuarryArea;
@@ -110,6 +100,7 @@ public class QuarryMachine extends WorkableTieredMachine
     @Persisted
     @Getter
     protected QuarryArea area;
+    @Setter
     protected QuarryDrillEntity drill;
     @Getter
     protected final long euPerTick;
@@ -428,6 +419,13 @@ public class QuarryMachine extends WorkableTieredMachine
     //////////////////////////////////////
 
     @Override
+    public void attachSideTabs(TabsWidget sideTabs) {
+        IFancyUIMachine.super.attachSideTabs(sideTabs);
+        var sqrtSlots = (int) Math.sqrt(exportItems.getSlots());
+        sideTabs.attachSubTab(new SlotsTab(exportItems, exportFluids, sqrtSlots));
+    }
+
+    @Override
     public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
         IFancyUIMachine.super.attachConfigurators(configuratorPanel);
         configuratorPanel.attachConfigurators(
@@ -436,11 +434,10 @@ public class QuarryMachine extends WorkableTieredMachine
 
     public static BiFunction<ResourceLocation, Integer, EditableMachineUI> EDITABLE_UI_CREATOR = Util
             .memoize((path, inventorySize) -> new EditableMachineUI("misc", path, () -> {
-                var template = createTemplate(inventorySize).createDefault();
+                var template = createTemplate().createDefault();
                 var batterySlot = createBatterySlot().createDefault();
-                batterySlot.setSelfPosition(new Position(100, 10));
-                var group = new WidgetGroup(0, 0, Math.max(template.getSize().width + 12, 172),
-                        template.getSize().height + 8);
+                batterySlot.setSelfPosition(new Position(150, 10));
+                var group = new WidgetGroup(0, 0, 172, template.getSize().height + 8);
                 var size = group.getSize();
 
                 template.setSelfPosition(new Position(
@@ -452,219 +449,29 @@ public class QuarryMachine extends WorkableTieredMachine
                 return group;
             }, (template, machine) -> {
                 if (machine instanceof QuarryMachine quarryMachine) {
-                    createTemplate(inventorySize).setupUI(template, quarryMachine);
+                    createTemplate().setupUI(template, quarryMachine);
                     createEnergyBar().setupUI(template, quarryMachine);
                     createBatterySlot().setupUI(template, quarryMachine);
                 }
             }));
 
-    protected static EditableUI<WidgetGroup, QuarryMachine> createTemplate(int inventorySize) {
+    protected static EditableUI<WidgetGroup, QuarryMachine> createTemplate() {
         return new EditableUI<>("quarry", WidgetGroup.class, () -> {
-            var rowSize = (int) Math.sqrt(inventorySize);
-            var width = rowSize * 18 + 120;
-            var height = Math.max((rowSize + 1) * 18, 80);
-            var group = new WidgetGroup(0, 0, width, height);
-
-            var slots = new WidgetGroup(120, (height - (rowSize + 1) * 18) / 2, rowSize * 18, rowSize * 18);
-            int x, y;
-            for (y = 0; y < rowSize; y++) {
-                for (x = 0; x < rowSize; x++) {
-                    var index = y * rowSize + x;
-                    var slot = new SlotWidget();
-                    slot.initTemplate();
-                    slot.setSelfPosition(new Position(x * 18, y * 18));
-                    slot.setBackground(GuiTextures.SLOT);
-                    slot.setId("slot_" + index);
-                    slots.addWidget(slot);
-                }
-            }
-            for (x = 0; x < rowSize; x++) {
-                var tank = new TankWidget() {
-
-                    {
-                        setAllowClickDrained(true);
-                        setAllowClickFilled(false);
-                    }
-
-                    @Override
-                    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                        OGTMA.LOGGER.info("Mouse clicked button {} drain is {}", button,
-                                allowClickDrained ? "allowed" : "disabled");
-                        return super.mouseClicked(mouseX, mouseY, button);
-                    }
-
-                    @Override
-                    public void handleClientAction(int id, FriendlyByteBuf buffer) {
-                        super.handleClientAction(id, buffer);
-                        if (id == 1) {
-                            boolean isShiftKeyDown = buffer.readBoolean();
-                            int clickResult = tryClickContainer(isShiftKeyDown);
-                            if (clickResult >= 0) {
-                                writeUpdateInfo(4, buf -> buf.writeVarInt(clickResult));
-                            }
-                        }
-                    }
-
-                    protected int tryClickContainer(boolean isShiftKeyDown) {
-                        if (this.fluidTank == null) {
-                            return -1;
-                        } else {
-                            Player player = this.gui.entityPlayer;
-                            ItemStack currentStack = this.gui.getModularUIContainer().getCarried();
-                            IFluidHandlerItem handler = FluidUtil.getFluidHandler(currentStack).resolve().orElse(null);
-                            if (handler == null) {
-                                return -1;
-                            } else {
-                                int maxAttempts = isShiftKeyDown ? currentStack.getCount() : 1;
-                                FluidStack initialFluid = this.fluidTank.getFluidInTank(this.tank).copy();
-                                boolean performedEmptying;
-                                ItemStack drainedResult;
-                                int i;
-                                if (this.allowClickFilled && initialFluid.getAmount() > 0) {
-                                    performedEmptying = false;
-                                    drainedResult = ItemStack.EMPTY;
-
-                                    for (i = 0; i < maxAttempts; ++i) {
-                                        FluidActionResult result = FluidUtil.tryFillContainer(currentStack,
-                                                this.fluidTank, Integer.MAX_VALUE, (Player) null, false);
-                                        if (!result.isSuccess()) {
-                                            break;
-                                        }
-
-                                        ItemStack remainingStack = FluidUtil.tryFillContainer(currentStack,
-                                                this.fluidTank, Integer.MAX_VALUE, (Player) null, true).getResult();
-                                        performedEmptying = true;
-                                        currentStack.shrink(1);
-                                        if (drainedResult.isEmpty()) {
-                                            drainedResult = remainingStack.copy();
-                                        } else if (ItemStack.isSameItemSameTags(drainedResult, remainingStack)) {
-                                            if (drainedResult.getCount() < drainedResult.getMaxStackSize()) {
-                                                drainedResult.grow(1);
-                                            } else {
-                                                player.getInventory().placeItemBackInInventory(remainingStack);
-                                            }
-                                        } else {
-                                            player.getInventory().placeItemBackInInventory(drainedResult);
-                                            drainedResult = remainingStack.copy();
-                                        }
-                                    }
-
-                                    if (performedEmptying) {
-                                        SoundEvent soundevent = initialFluid.getFluid().getFluidType()
-                                                .getSound(initialFluid, SoundActions.BUCKET_FILL);
-                                        if (soundevent == null) {
-                                            soundevent = SoundEvents.BUCKET_FILL;
-                                        }
-
-                                        player.level().playSound((Player) null, player.position().x,
-                                                player.position().y + 0.5, player.position().z, soundevent,
-                                                SoundSource.BLOCKS, 1.0F, 1.0F);
-                                        if (currentStack.isEmpty()) {
-                                            this.gui.getModularUIContainer().setCarried(drainedResult);
-                                        } else {
-                                            this.gui.getModularUIContainer().setCarried(currentStack);
-                                            player.getInventory().placeItemBackInInventory(drainedResult);
-                                        }
-
-                                        return this.gui.getModularUIContainer().getCarried().getCount();
-                                    }
-                                }
-
-                                if (this.allowClickDrained) {
-                                    performedEmptying = false;
-                                    drainedResult = ItemStack.EMPTY;
-
-                                    for (i = 0; i < maxAttempts; ++i) {
-                                        int remainingCapacity = this.fluidTank.getTankCapacity(this.tank) -
-                                                this.fluidTank.getFluidInTank(this.tank).getAmount();
-                                        FluidActionResult result = FluidUtil.tryEmptyContainer(currentStack,
-                                                this.fluidTank, remainingCapacity, (Player) null, false);
-                                        if (!result.isSuccess()) {
-                                            break;
-                                        }
-
-                                        ItemStack remainingStack = FluidUtil.tryEmptyContainer(currentStack,
-                                                this.fluidTank, remainingCapacity, (Player) null, true).getResult();
-                                        performedEmptying = true;
-                                        currentStack.shrink(1);
-                                        if (drainedResult.isEmpty()) {
-                                            drainedResult = remainingStack.copy();
-                                        } else if (ItemStack.isSameItemSameTags(drainedResult, remainingStack)) {
-                                            if (drainedResult.getCount() < drainedResult.getMaxStackSize()) {
-                                                drainedResult.grow(1);
-                                            } else {
-                                                player.getInventory().placeItemBackInInventory(remainingStack);
-                                            }
-                                        } else {
-                                            player.getInventory().placeItemBackInInventory(drainedResult);
-                                            drainedResult = remainingStack.copy();
-                                        }
-                                    }
-
-                                    FluidStack filledFluid = this.fluidTank.getFluidInTank(this.tank);
-                                    if (performedEmptying) {
-                                        SoundEvent soundevent = filledFluid.getFluid().getFluidType()
-                                                .getSound(filledFluid, SoundActions.BUCKET_EMPTY);
-                                        if (soundevent == null) {
-                                            soundevent = SoundEvents.BUCKET_EMPTY;
-                                        }
-
-                                        player.level().playSound((Player) null, player.position().x,
-                                                player.position().y + 0.5, player.position().z, soundevent,
-                                                SoundSource.BLOCKS, 1.0F, 1.0F);
-                                        if (currentStack.isEmpty()) {
-                                            this.gui.getModularUIContainer().setCarried(drainedResult);
-                                        } else {
-                                            this.gui.getModularUIContainer().setCarried(currentStack);
-                                            player.getInventory().placeItemBackInInventory(drainedResult);
-                                        }
-
-                                        return this.gui.getModularUIContainer().getCarried().getCount();
-                                    }
-                                }
-
-                                return -1;
-                            }
-                        }
-                    }
-                };
-                tank.initTemplate();
-                tank.setSelfPosition(new Position(x * 18, y * 18));
-                tank.setBackground(GuiTextures.FLUID_SLOT);
-                tank.setId("tank_" + x);
-                slots.addWidget(tank);
-            }
-
-            var componentPanel = new ComponentPanelWidget(4, 5, list -> {});
+            var group = new WidgetGroup(0, 0, 120, 100);
+            
+            var componentPanel = new ComponentPanelWidget(0, 0, list -> {});
             componentPanel.setMaxWidthLimit(110);
             componentPanel.setId("component_panel");
 
-            var container = new WidgetGroup(0, 0, 117, height);
+            var container = new WidgetGroup(0, 0, 117, 100);
             container.addWidget(new DraggableScrollableWidgetGroup(4, 4, container.getSize().width - 8,
                     container.getSize().height - 8)
                     .setBackground(GuiTextures.DISPLAY)
                     .addWidget(componentPanel));
             container.setBackground(GuiTextures.BACKGROUND_INVERSE);
             group.addWidget(container);
-            group.addWidget(slots);
             return group;
         }, (group, machine) -> {
-            WidgetUtils.widgetByIdForEach(group, "^slot_[0-9]+$", SlotWidget.class, slot -> {
-                var index = WidgetUtils.widgetIdIndex(slot);
-                if (index >= 0 && index < machine.exportItems.getSlots()) {
-                    slot.setHandlerSlot(machine.exportItems, index);
-                    slot.setCanTakeItems(true);
-                    slot.setCanPutItems(false);
-                }
-            });
-            WidgetUtils.widgetByIdForEach(group, "^tank_[0-9]+$", TankWidget.class, tank -> {
-                var index = WidgetUtils.widgetIdIndex(tank);
-                if (index >= 0 && index < machine.exportFluids.getTanks()) {
-                    tank.setFluidTank(machine.exportFluids, index);
-                    tank.setAllowClickDrained(true);
-                    tank.setAllowClickFilled(false);
-                }
-            });
             WidgetUtils.widgetByIdForEach(group, "^component_panel$", ComponentPanelWidget.class, panel -> {
                 panel.textSupplier(machine::addDisplayText);
             });
