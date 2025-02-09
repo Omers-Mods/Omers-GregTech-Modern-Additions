@@ -23,7 +23,7 @@ public class OGTMA {
     public static final String MOD_ID = "ogtma";
     public static final Logger LOGGER = LogManager.getLogger();
     public static final GTRegistrate REGISTRATE = GTRegistrate.create(MOD_ID);
-    public static final String NAME = "Omer's GregTech Modern Additions";
+    public static final String NAME = "OmerTech";
 
     public OGTMA() {
         init();
