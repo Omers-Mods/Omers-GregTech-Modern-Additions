@@ -7,5 +7,5 @@ public class OAMachineUtils {
     public static Int2IntFunction tankNumberScaling = tier -> tier + 1;
     public static Int2IntFunction inventorySizeScaling = tier -> (tier + 1) * (tier + 1);
     public static Int2IntFunction blocksPerIterationScaling = tier -> tier * tier + 1;
-    public static Int2IntFunction quarrySpeedScaling = tier -> 120 / tier;
+    public static Int2IntFunction quarrySpeedScaling = tier -> 80 / (tier + 1);
 }
