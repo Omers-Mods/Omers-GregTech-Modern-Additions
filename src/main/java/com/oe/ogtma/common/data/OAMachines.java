@@ -5,12 +5,16 @@ import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.registry.registrate.MachineBuilder;
+import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
+import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
+import com.oe.ogtma.common.machine.feature.multiblock.AutoMufflerPartMachine;
 import com.oe.ogtma.common.machine.quarry.QuarryMachine;
 import com.oe.ogtma.config.OAConfig;
 
@@ -28,7 +32,7 @@ public class OAMachines {
     // todo: rework speed
     public static final MachineDefinition[] QUARRY;
     static {
-        if (OAConfig.INSTANCE.features.enableQuarry) {
+        if (OAConfig.INSTANCE.features.enableAutoMufflers) {
             QUARRY = registerTieredMachines("quarry", (holder, tier) -> new QuarryMachine(holder, tier,
                     quarrySpeedScaling.applyAsInt(tier), Math.min(tier, 3)),
                     (tier, builder) -> builder
@@ -58,6 +62,28 @@ public class OAMachines {
                     tiersBetween(LV, IV));
         } else {
             QUARRY = new MachineDefinition[0];
+        }
+    }
+
+    public static final MachineDefinition[] AUTO_MUFFLER_HATCH;
+    static {
+        if (OAConfig.INSTANCE.features.enableAutoMufflers) {
+            AUTO_MUFFLER_HATCH = registerTieredMachines("auto_muffler_hatch",
+                    AutoMufflerPartMachine::new,
+                    (tier, builder) -> builder
+                            .langValue("Auto Muffler Hatch " + VNF[tier])
+                            .rotationState(RotationState.ALL)
+                            .abilities(PartAbility.MUFFLER)
+                            .overlayTieredHullRenderer("auto_muffler_hatch")
+                            .tooltips(LangHandler.getFromMultiLang("gtceu.machine.muffler_hatch.tooltip", 0),
+                                    Component.translatable("gtceu.muffler.recovery_tooltip", Math.max(1, tier * 10)),
+                                    Component.translatable("gtceu.universal.enabled"),
+                                    LangHandler.getFromMultiLang("gtceu.machine.muffler_hatch.tooltip", 1)
+                                            .withStyle(ChatFormatting.DARK_RED))
+                            .register(),
+                    GTMachineUtils.ELECTRIC_TIERS);
+        } else {
+            AUTO_MUFFLER_HATCH = new MachineDefinition[0];
         }
     }
 

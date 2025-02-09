@@ -23,7 +23,7 @@ public class OAMaterialBlocks {
     public static final BlockEntry<? extends MaterialBlock>[] QUARRY_BLOCKS;
     public static final BlockEntry<QuarryPipeBlock>[] QUARRY_PIPE_BLOCKS;
     static {
-        if (OAConfig.INSTANCE.features.enableQuarry) {
+        if (OAConfig.INSTANCE.features.enableAutoMufflers) {
             QUARRY_BLOCKS = new BlockEntry[] {
                     GTMaterialBlocks.MATERIAL_BLOCKS.get(TagPrefix.block, GTMaterials.WroughtIron),
                     GTMaterialBlocks.MATERIAL_BLOCKS.get(TagPrefix.block, GTMaterials.Steel),
