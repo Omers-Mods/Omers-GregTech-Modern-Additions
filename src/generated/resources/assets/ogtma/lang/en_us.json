@@ -37,6 +37,7 @@
   "config.ogtma.option.quarry": "Quarry",
   "config.ogtma.option.renderQuarryDrill": "Render Quarry Drill",
   "entity.ogtma.quarry_drill": "Quarry Drill",
+  "item.ogtma.mode_switcher_cover": "Mode Switcher Cover",
   "ogtma.gui.tooltip.inventory": "Inventory",
   "ogtma.gui.tooltip.tanks": "Tanks",
   "ogtma.machine.quarry.last": "Last Position: %1$s",

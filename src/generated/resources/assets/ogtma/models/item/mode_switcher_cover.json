@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ogtma:item/mode_switcher_cover"
+  }
+}

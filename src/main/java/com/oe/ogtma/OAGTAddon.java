@@ -32,4 +32,9 @@ public class OAGTAddon implements IGTAddon {
     public void addRecipes(Consumer<FinishedRecipe> provider) {
         OARecipes.init(provider);
     }
+
+    @Override
+    public void registerCovers() {
+        OACovers.init();
+    }
 }
