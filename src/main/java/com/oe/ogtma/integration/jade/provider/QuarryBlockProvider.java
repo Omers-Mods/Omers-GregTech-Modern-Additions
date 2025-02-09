@@ -2,6 +2,7 @@ package com.oe.ogtma.integration.jade.provider;
 
 import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -25,6 +26,14 @@ public class QuarryBlockProvider implements IBlockComponentProvider, IServerData
             tooltip.add(Component.translatable("ogtma.option.quarry_fluid_mode").append(": ")
                     .append(Component.translatable(QuarryFluidMode.get(fluidMode).getTooltip())));
         }
+        if (tag.contains("Last")) {
+            var lastLong = tag.getLong("Last");
+            if (lastLong != accessor.getPosition().asLong()) {
+                var posStr = "(" + BlockPos.getX(lastLong) + ", " + BlockPos.getY(lastLong) + ", " +
+                        BlockPos.getZ(lastLong) + ")";
+                tooltip.add(Component.translatable("ogtma.machine.quarry.last", posStr));
+            }
+        }
     }
 
     @Override
@@ -32,6 +41,7 @@ public class QuarryBlockProvider implements IBlockComponentProvider, IServerData
         if (accessor.getBlockEntity() instanceof MetaMachineBlockEntity mmbe &&
                 mmbe.getMetaMachine() instanceof QuarryMachine quarry) {
             tag.putInt("FluidMode", quarry.getQuarryFluidMode().ordinal());
+            tag.putLong("Last", quarry.getRecipeLogic().getLast().asLong());
         }
     }
 

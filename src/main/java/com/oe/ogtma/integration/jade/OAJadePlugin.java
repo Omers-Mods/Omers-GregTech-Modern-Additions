@@ -7,7 +7,9 @@ import com.oe.ogtma.integration.jade.provider.QuarryBlockProvider;
 import snownee.jade.api.IWailaClientRegistration;
 import snownee.jade.api.IWailaCommonRegistration;
 import snownee.jade.api.IWailaPlugin;
+import snownee.jade.api.WailaPlugin;
 
+@WailaPlugin
 public class OAJadePlugin implements IWailaPlugin {
 
     @Override

@@ -7,6 +7,7 @@ public class OALangHandler {
     public static void init(RegistrateLangProvider provider) {
         OAMachineLang.init(provider);
         OAConfigLang.init(provider);
+        OAIntegrationLang.init(provider);
 
         // QuarryMode tooltips
         provider.add("ogtma.option.quarry_mode", "Quarry Mode");
