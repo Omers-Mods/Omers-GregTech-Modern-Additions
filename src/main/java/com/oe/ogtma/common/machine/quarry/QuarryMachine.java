@@ -259,6 +259,7 @@ public class QuarryMachine extends WorkableTieredMachine
             drill.discard();
             drill = null;
         }
+        getRecipeLogic().getLoadedChunks().forEach(pos -> unloadChunk(pos.x, pos.z));
     }
 
     @Override
